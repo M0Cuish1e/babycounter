@@ -10,6 +10,7 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 - **Hébergement** : GitHub Pages depuis `main`. Tous les chemins sont relatifs pour fonctionner sous `/babycounter/`.
 - **Design** : piste « Bracelets de naissance ». Chaque bébé est un bracelet rose ou bleu, prénom en écriture manuscrite (Caveat), reste de l'interface épuré en DM Sans, encre indigo `#23254A` sur fond `#FBFBFD`. Les couleurs sont des variables CSS en tête de `style.css`.
 - **Accueil** : sélecteur Semaine / Mois / Année, calendrier, puis liste des bracelets de la période affichée. Toucher un jour filtre la liste sur ce jour.
+- **Ordinateur** : trois colonnes (menu, calendrier, liste de 340 px). Une liste sous le calendrier a été maquettée puis écartée. Un prénom trop long ne doit jamais élargir la colonne : sa police est réduite (`ajusterPrenoms()` dans `app.js`).
 - **Navigation** : Accueil, bouton +, Stats. En bas sur téléphone, menu latéral sur ordinateur (à partir de 900 px). Les anciens onglets Records, Prénoms et Carte ont été écartés ou fusionnés dans Stats.
 - **Champs d'une fiche** : prénom, sexe, date, heure, poids (grammes), taille (cm), mode d'accouchement (`voie-basse`, `instrumentale`, `cesarienne`), note. Seuls le sexe et la date sont obligatoires. Le champ « rôle » a été explicitement retiré.
 

@@ -241,6 +241,20 @@
       return;
     }
     liste.forEach(function (b) { zone.appendChild(bracelet(b)); });
+    ajusterPrenoms(zone);
+  }
+
+  /* Prénom trop long pour le bracelet : on réduit la police jusqu'à ce qu'il tienne,
+     sans élargir la colonne. En dessous de 15 px, les points de suspension prennent le relais.
+     Sans effet sur un élément masqué (largeur nulle) : on rappelle la fonction à l'affichage. */
+  function ajusterPrenoms(racine) {
+    racine.querySelectorAll('.bracelet-prenom').forEach(function (p) {
+      p.style.fontSize = '';
+      var dispo = p.clientWidth, besoin = p.scrollWidth;
+      if (dispo > 0 && besoin > dispo) {
+        p.style.fontSize = Math.max(15, Math.floor(parseFloat(getComputedStyle(p).fontSize) * dispo / besoin)) + 'px';
+      }
+    });
   }
 
   function rendreAccueil() {
@@ -311,6 +325,7 @@
     var sexe = valeurSexe(), ap = $('apercu');
     ap.className = 'bracelet apercu ' + (sexe || 'neutre');
     $('apercu-prenom').textContent = form.prenom.value.trim() || 'Prénom';
+    ajusterPrenoms(ap);
     $('apercu-quand').textContent = form.date.value ? texteQuand({ date: form.date.value, heure: form.heure.value, mode: valeurMode() }) : '';
   }
   function ouvrirFiche(b) {
@@ -335,6 +350,7 @@
     form.date.max = iso(new Date());
     majApercu();
     dlgFiche.showModal();
+    ajusterPrenoms($('apercu'));
     dlgFiche.scrollTop = 0;
   }
   function erreurFiche(msg) { var e = $('fiche-erreur'); e.textContent = msg; e.hidden = false; }
@@ -536,6 +552,13 @@
   /* ---------- Démarrage ---------- */
   charger();
   rendre();
+  /* Les largeurs changent avec la fenêtre et quand la police manuscrite finit de charger. */
+  var minuterieTaille = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(minuterieTaille);
+    minuterieTaille = setTimeout(function () { ajusterPrenoms(document); }, 150);
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ajusterPrenoms(document); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     navigator.serviceWorker.register('sw.js').catch(function () {});
