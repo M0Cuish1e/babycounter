@@ -16,6 +16,7 @@ Carnet personnel des naissances pour une étudiante sage-femme : un bracelet par
 | `sw.js` | Service worker : cache pour le hors-ligne |
 | `manifest.webmanifest`, `icons/` | Installation comme appli |
 | `fonts/` | Polices DM Sans et Caveat (licence OFL), embarquées pour le hors-ligne |
+| `exemples/` | Jeux de données fictifs à importer pour tester (hors du cache hors ligne, volontairement) |
 
 ## Lancer en local
 
