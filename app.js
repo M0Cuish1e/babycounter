@@ -12,7 +12,7 @@
   var MODES = { 'voie-basse': 'voie basse', 'instrumentale': 'instrumentale', 'cesarienne': 'césarienne' };
 
   /* ---------- État ---------- */
-  var donnees = { version: VERSION, bebes: [], dernierExport: null };
+  var donnees = { version: VERSION, bebes: [], dernierExport: null, rappelMasque: null };
   var etat = { vue: 'accueil', periode: 'mois', ancre: minuit(new Date()), jour: null };
   var ficheId = null;
 
@@ -69,6 +69,7 @@
       if (brut && Array.isArray(brut.bebes)) {
         donnees.bebes = brut.bebes.map(normaliser).filter(Boolean);
         donnees.dernierExport = brut.dernierExport || null;
+        donnees.rappelMasque = brut.rappelMasque || null;
       }
     } catch (e) { /* stockage vide ou illisible : on démarre sans données */ }
   }
@@ -362,6 +363,8 @@
       var reference = donnees.dernierExport || donnees.bebes.reduce(function (m, b) { return b.cree < m ? b.cree : m; }, dernier);
       var jours = (Date.now() - new Date(reference).getTime()) / 86400000;
       montrer = jours > 30 && (!donnees.dernierExport || dernier > donnees.dernierExport);
+      /* Fermé à la main : le rappel revient un mois plus tard s'il n'y a toujours pas eu d'export. */
+      if (donnees.rappelMasque && (Date.now() - new Date(donnees.rappelMasque).getTime()) / 86400000 < 30) montrer = false;
       $('rappel').firstElementChild.textContent = donnees.dernierExport ? 'Sauvegarde de plus d’un mois.' : 'Pas encore de sauvegarde.';
     }
     $('rappel').hidden = !montrer;
@@ -604,6 +607,7 @@
     if (action === 'ajouter') ouvrirFiche(null);
     else if (action === 'reglages') ouvrirReglages();
     else if (action === 'exporter') exporter();
+    else if (action === 'masquer-rappel') { donnees.rappelMasque = new Date().toISOString(); enregistrer(); rendreRappel(); }
     else if (action === 'importer') $('fichier-import').click();
     else if (action === 'precedent') deplacer(-1);
     else if (action === 'suivant') deplacer(1);
