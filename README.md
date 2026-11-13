@@ -1,10 +1,15 @@
 # Babycounter
 
-Carnet personnel des naissances pour une étudiante sage-femme : un bracelet par bébé, un calendrier (semaine, mois, année) et quelques stats.
+Carnet personnel des naissances pour une étudiante sage-femme : un bracelet par bébé, un calendrier (semaine, mois, année), une liste complète avec recherche et quelques stats.
+
+**Utiliser l'appli : https://m0cuish1e.github.io/babycounter/**
+
+Pour l'installer sur l'écran d'accueil d'un iPhone : ouvrir ce lien dans Safari, puis Partager, « Sur l'écran d'accueil ». Sur Android : menu de Chrome, « Installer l'application ». Une fois installée, n'utiliser que l'appli : sur iPhone, ses données sont séparées de celles de Safari.
 
 - **Rien à installer** : c'est une page web, installable comme une appli (PWA) et utilisable hors ligne.
 - **Données sur l'appareil uniquement** : tout est stocké dans le navigateur (`localStorage`). Aucun serveur, aucun envoi réseau.
 - **Sauvegarde** : export et import d'un fichier JSON depuis « Réglages et sauvegarde ».
+- **Données d'essai** : des fichiers fictifs à importer pour tester sont dans [`exemples/`](exemples/) ([petit](https://m0cuish1e.github.io/babycounter/exemples/essai-petit.json), [deux ans](https://m0cuish1e.github.io/babycounter/exemples/essai-deux-ans.json), [cas limites](https://m0cuish1e.github.io/babycounter/exemples/essai-limites.json)). « Tout effacer » les retire.
 
 ## Fichiers
 
