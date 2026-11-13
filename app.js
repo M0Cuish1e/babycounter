@@ -154,18 +154,57 @@
     if (liste.length > capOrdi) plus.appendChild(el('span', { class: 'plus-o', text: '+ ' + (liste.length - capOrdi) }));
     return [pts, plus];
   }
-  function caseJour(d, index, semaine, k) {
-    var cle = iso(d), liste = index[cle] || [];
+  function boutonJour(d, liste, enfants) {
+    var cle = iso(d);
     var classes = 'jour' + (liste.length ? ' plein' : '') + (cle === iso(new Date()) ? ' aujourdhui' : '') + (cle === etat.jour ? ' choisi' : '');
     var label = quantieme(d.getDate()) + ' ' + MOIS[d.getMonth()] + ', ' + (liste.length ? pluriel(liste.length, 'naissance') : 'aucune naissance');
-    var enfants = [];
-    if (semaine) enfants.push(el('span', { class: 'nomj', text: JOURS_C[k] }));
-    enfants.push(el('span', { class: 'num', text: d.getDate() }));
-    enfants = enfants.concat(semaine ? casePoints(liste, 10, 4, 10) : casePoints(liste, 3, 3, 2));
     return el('button', {
       type: 'button', class: classes, 'aria-label': label, 'aria-pressed': cle === etat.jour ? 'true' : 'false',
       onclick: function () { etat.jour = etat.jour === cle ? null : cle; rendreAccueil(); }
-    }, enfants);
+    }, [el('span', { class: 'num', text: d.getDate() })].concat(enfants));
+  }
+  function caseJour(d, index) {
+    var liste = index[iso(d)] || [];
+    return boutonJour(d, liste, casePoints(liste, 3, 3, 2));
+  }
+
+  /* Vue semaine : chaque jour est une colonne de 0 h à 24 h, chaque bébé y est placé à son heure.
+     Les bébés sans heure vont dans une bande en bas, de même hauteur pour toute la semaine. */
+  function minutes(h) { var p = h.split(':'); return +p[0] * 60 + +p[1]; }
+  function caseSemaine(d, index, nbSansHeure) {
+    var liste = index[iso(d)] || [];
+    var frise = el('span', { class: 'frise', 'aria-hidden': 'true' });
+    var sans = el('span', { class: 'sans-heure', 'aria-hidden': 'true', style: '--n:' + nbSansHeure });
+    liste.forEach(function (b) {
+      var pt = el('span', { class: 'pt ' + b.sexe, text: b.prenom || 'Bébé' });
+      if (b.heure) { pt.setAttribute('data-min', minutes(b.heure)); frise.appendChild(pt); } else sans.appendChild(pt);
+    });
+    return boutonJour(d, liste, nbSansHeure ? [frise, sans] : [frise]);
+  }
+  function colonneHeures(nbSansHeure) {
+    var frise = el('span', { class: 'frise' }, [6, 12, 18].map(function (h) {
+      return el('span', { class: 'heure', style: 'top:' + (h / 24 * 100) + '%', text: h + ' h' });
+    }));
+    var enfants = [el('span', { class: 'num', text: '\u00a0' }), frise];
+    if (nbSansHeure) enfants.push(el('span', { class: 'sans-heure', style: '--n:' + nbSansHeure }, [el('span', { class: 'heure', text: '?' })]));
+    return el('div', { class: 'jour heures', 'aria-hidden': 'true' }, enfants);
+  }
+  /* Place les bébés à leur heure ; deux naissances proches sont écartées juste assez pour ne pas se chevaucher. */
+  function placerFrises(racine) {
+    racine.querySelectorAll('.grille.semaine .jour:not(.heures) .frise').forEach(function (frise) {
+      var H = frise.clientHeight, pts = [].slice.call(frise.children), ecart = 2;
+      if (!H || !pts.length) return;
+      var h = pts[0].offsetHeight, y = [];
+      pts.forEach(function (pt, i) {
+        var ideal = Math.min(H - h, Math.max(0, pt.getAttribute('data-min') / 1440 * H - h / 2));
+        y[i] = i ? Math.max(ideal, y[i - 1] + h + ecart) : ideal;
+      });
+      for (var i = pts.length - 1; i >= 0; i--) {
+        var plafond = i === pts.length - 1 ? H - h : y[i + 1] - h - ecart;
+        y[i] = Math.max(0, Math.min(y[i], plafond));
+      }
+      pts.forEach(function (pt, i) { pt.style.top = y[i] + 'px'; });
+    });
   }
   function nomsJours() {
     return el('div', { class: 'jours-noms', 'aria-hidden': 'true' }, JOURS_C.map(function (j) { return el('span', { text: j }); }));
@@ -178,13 +217,23 @@
       var decalage = (new Date(y, m, 1).getDay() + 6) % 7, nb = new Date(y, m + 1, 0).getDate();
       var grille = el('div', { class: 'grille' });
       for (var i = 0; i < decalage; i++) grille.appendChild(el('span'));
-      for (var j = 1; j <= nb; j++) grille.appendChild(caseJour(new Date(y, m, j), index, false));
+      for (var j = 1; j <= nb; j++) grille.appendChild(caseJour(new Date(y, m, j), index));
       cal.appendChild(nomsJours());
       cal.appendChild(grille);
     } else if (etat.periode === 'semaine') {
-      var l = lundi(a), g = el('div', { class: 'grille semaine' });
-      for (var k = 0; k < 7; k++) g.appendChild(caseJour(new Date(l.getFullYear(), l.getMonth(), l.getDate() + k), index, true, k));
+      var l = lundi(a), jours = [], nbSansHeure = 0;
+      for (var k = 0; k < 7; k++) jours.push(new Date(l.getFullYear(), l.getMonth(), l.getDate() + k));
+      jours.forEach(function (d) {
+        var n = (index[iso(d)] || []).filter(function (b) { return !b.heure; }).length;
+        if (n > nbSansHeure) nbSansHeure = n;
+      });
+      var g = el('div', { class: 'grille semaine' }, [colonneHeures(nbSansHeure)].concat(jours.map(function (d) { return caseSemaine(d, index, nbSansHeure); })));
+      var noms = nomsJours();
+      noms.classList.add('semaine');
+      noms.insertBefore(el('span'), noms.firstChild);
+      cal.appendChild(noms);
       cal.appendChild(g);
+      placerFrises(cal);
     } else {
       var an = a.getFullYear(), auj = new Date(), bloc = el('div', { class: 'annee' });
       MOIS.forEach(function (nom, mm) {
@@ -628,7 +677,7 @@
   var minuterieTaille = null;
   window.addEventListener('resize', function () {
     clearTimeout(minuterieTaille);
-    minuterieTaille = setTimeout(function () { ajusterPrenoms(document); }, 150);
+    minuterieTaille = setTimeout(function () { ajusterPrenoms(document); placerFrises(document); }, 150);
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ajusterPrenoms(document); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});

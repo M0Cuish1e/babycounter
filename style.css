@@ -93,7 +93,6 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .jour.aujourdhui { box-shadow: inset 0 0 0 1.5px var(--encre); }
 .jour.choisi { background: var(--encre); color: #fff; }
 .jour .num { font-size: 13px; font-weight: 500; line-height: 1; }
-.jour .nomj { display: none; }
 .pts { display: flex; gap: 2px; height: 7px; align-items: center; }
 .pt { width: 7px; height: 7px; border-radius: 4px; font-size: 0; overflow: hidden; }
 .pt.F { background: var(--rose-vif); } .pt.M { background: var(--bleu-vif); }
@@ -101,14 +100,21 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .jour.choisi .plus { color: #fff; }
 .plus-o { display: none; }
 
-.grille.semaine .jour { height: 104px; border-radius: 16px; background: var(--case); justify-content: flex-start; padding-top: 8px; gap: 2px; }
+/* Semaine : une colonne par jour, de 0 h (en haut) à 24 h, repères toutes les 6 h */
+.jours-noms.semaine, .grille.semaine { grid-template-columns: 22px repeat(7, minmax(0, 1fr)); }
+.grille.semaine .jour { height: auto; border-radius: 16px; background: var(--case); justify-content: flex-start; align-items: stretch; padding: 8px 0 6px; gap: 6px; }
 .grille.semaine .jour.choisi { background: var(--encre); }
-.grille.semaine .nomj { display: block; font-size: 12px; color: var(--gris); }
-.grille.semaine .jour.choisi .nomj { color: #fff; }
-.grille.semaine .num { font-size: 17px; font-weight: 700; line-height: 1.1; }
-.grille.semaine .pts { flex-direction: column; gap: 3px; height: auto; margin-top: 4px; }
-.grille.semaine .pt { width: 26px; height: 8px; }
-.grille.semaine .pt:nth-child(n+5) { display: none; }
+.grille.semaine .num { font-size: 17px; font-weight: 700; line-height: 1.1; text-align: center; }
+.frise { position: relative; display: block; height: 168px; background-image: repeating-linear-gradient(to bottom, var(--trait-doux) 0 1px, transparent 1px 25%); }
+.jour.choisi .frise { background-image: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 25%); }
+.frise .pt { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 26px; height: 8px; }
+.sans-heure { display: flex; flex-direction: column; align-items: center; gap: 2px; height: calc(var(--n) * 10px - 2px); padding-top: 5px; border-top: 1px dashed var(--trait); box-sizing: content-box; }
+.sans-heure .pt { flex-shrink: 0; width: 26px; height: 8px; }
+.grille.semaine .heures { background: transparent; box-shadow: none; }
+.heures .frise { background: none; }
+.heures .sans-heure { border-top-color: transparent; align-items: flex-end; }
+.heure { position: absolute; right: 3px; transform: translateY(-50%); font-size: 10px; line-height: 1; color: var(--gris); white-space: nowrap; }
+.heures .sans-heure .heure { position: static; transform: none; padding-right: 3px; }
 
 .annee { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .moisc { height: 76px; border: 0; border-radius: 16px; background: var(--fond); box-shadow: inset 0 0 0 1.5px var(--trait-doux); padding: 8px 10px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-width: 0; }
@@ -266,12 +272,14 @@ legend, .champ label { display: block; padding: 0; font-size: 13px; color: var(-
   .jour .plus { font-size: 12px; line-height: 1; padding-left: 2px; }
   .grille:not(.semaine) .pt:nth-child(n+3) { display: none; }
   .plus-m { display: none; } .plus-o { display: inline; }
-  .grille.semaine .pt:nth-child(n+5) { display: block; }
-  .grille.semaine .jour { height: 320px; border-radius: 14px; padding: 7px 8px; gap: 3px; }
-  .grille.semaine .nomj { display: none; }
-  .grille.semaine .num { font-size: 13px; font-weight: 500; }
-  .grille.semaine .pts { margin-top: 0; }
-  .grille.semaine .pt { width: auto; height: 21px; }
+  .jours-noms.semaine, .grille.semaine { grid-template-columns: 30px repeat(7, minmax(0, 1fr)); }
+  .grille.semaine .jour { height: auto; border-radius: 14px; padding: 7px 6px; gap: 6px; }
+  .grille.semaine .num { font-size: 13px; font-weight: 500; text-align: left; }
+  .frise { height: 300px; }
+  .frise .pt { left: 0; right: 0; transform: none; width: auto; height: 21px; }
+  .sans-heure { align-items: stretch; gap: 3px; height: calc(var(--n) * 24px - 3px); }
+  .sans-heure .pt { width: auto; height: 21px; }
+  .heure { font-size: 11px; right: 4px; }
 
   .annee { gap: 10px; }
   .moisc { height: 150px; border-radius: 20px; padding: 16px 18px; }
