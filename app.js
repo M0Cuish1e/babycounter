@@ -327,7 +327,7 @@
       form.date.value = b.date;
       form.heure.value = b.heure;
       form.poids.value = b.poids == null ? '' : b.poids;
-      form.taille.value = b.taille == null ? '' : b.taille;
+      form.taille.value = b.taille == null ? '' : String(b.taille).replace('.', ',');
       form.note.value = b.note;
     } else {
       form.date.value = etat.jour || iso(new Date());
@@ -338,7 +338,9 @@
     dlgFiche.scrollTop = 0;
   }
   function erreurFiche(msg) { var e = $('fiche-erreur'); e.textContent = msg; e.hidden = false; }
-  function nombre(champ) { var v = champ.value.trim().replace(',', '.'); return v === '' ? null : Number(v); }
+  /* Champs texte (et non number) : la virgule décimale est acceptée partout, y compris sur iPhone.
+     Les espaces sont ignorés (« 3 420 »). Une saisie non numérique donne NaN, donc un message d'erreur. */
+  function nombre(champ) { var v = champ.value.replace(/\s/g, '').replace(',', '.'); return v === '' ? null : Number(v); }
 
   form.addEventListener('input', function () { $('fiche-erreur').hidden = true; majApercu(); });
   form.addEventListener('change', function (ev) {
