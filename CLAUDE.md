@@ -11,7 +11,8 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 - **Design** : piste « Bracelets de naissance ». Chaque bébé est un bracelet rose ou bleu, prénom en écriture manuscrite (Caveat), reste de l'interface épuré en DM Sans, encre indigo `#23254A` sur fond `#FBFBFD`. Les couleurs sont des variables CSS en tête de `style.css`.
 - **Accueil** : sélecteur Semaine / Mois / Année, calendrier, puis liste des bracelets de la période affichée. Toucher un jour filtre la liste sur ce jour.
 - **Ordinateur** : trois colonnes (menu, calendrier, liste de 340 px). Une liste sous le calendrier a été maquettée puis écartée. Un prénom trop long ne doit jamais élargir la colonne : sa police est réduite (`ajusterPrenoms()` dans `app.js`).
-- **Navigation** : Accueil, bouton +, Stats. En bas sur téléphone, menu latéral sur ordinateur (à partir de 900 px). Les anciens onglets Records, Prénoms et Carte ont été écartés ou fusionnés dans Stats.
+- **Navigation** : Accueil, bouton +, Stats. En bas sur téléphone, menu latéral sur ordinateur (à partir de 900 px). La vue Naissances est une entrée du menu latéral sur ordinateur et une loupe dans l'en-tête sur téléphone, pour ne pas charger la barre du bas. Les anciens onglets Records, Prénoms et Carte ont été écartés ou fusionnés dans Stats.
+- **Naissances** : liste complète triée par date, du plus récent au plus ancien (pas d'autre tri). Recherche sur le prénom et la note, sans tenir compte des accents ni des majuscules. Filtres : période du/au, sexe, mode (dont « non renseigné »), poids min. et max. Les filtres ne sont pas mémorisés d'une ouverture à l'autre de l'appli.
 - **Champs d'une fiche** : prénom, sexe, date, heure, poids (grammes), taille (cm), mode d'accouchement (`voie-basse`, `instrumentale`, `cesarienne`), note. Seuls le sexe et la date sont obligatoires. Le champ « rôle » a été explicitement retiré.
 
 ## Conventions
@@ -26,7 +27,7 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 
 ## État
 
-Fait : stockage, accueil, ajout, modification, suppression, export et import JSON (l'import fusionne par identifiant), mise en page téléphone et ordinateur, manifeste, service worker, rappel de sauvegarde après un mois.
+Fait : stockage, accueil, vue Naissances avec recherche, ajout, modification, suppression, export et import JSON (l'import fusionne par identifiant), mise en page téléphone et ordinateur, manifeste, service worker, rappel de sauvegarde après un mois.
 
 À faire :
 

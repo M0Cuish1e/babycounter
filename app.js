@@ -138,6 +138,7 @@
       if (actif) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
     $('vue-accueil').hidden = etat.vue !== 'accueil';
+    $('vue-naissances').hidden = etat.vue !== 'naissances';
     $('vue-stats').hidden = etat.vue !== 'stats';
   }
 
@@ -268,6 +269,62 @@
     rendreListe();
   }
 
+  /* ---------- Rendu : naissances (liste complète et recherche) ---------- */
+  /* Les champs du formulaire de recherche sont la seule source des critères. */
+  var formRech = $('form-recherche');
+  function sansAccents(s) { return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘]/g, "'").toLowerCase(); }
+  function criteres() {
+    var pmin = nombre(formRech.pmin), pmax = nombre(formRech.pmax);
+    return {
+      mots: sansAccents(formRech.texte.value.trim()).split(/\s+/).filter(Boolean),
+      du: formRech.du.value, au: formRech.au.value, sexe: formRech.sexe.value, mode: formRech.mode.value,
+      pmin: pmin == null || isNaN(pmin) ? null : pmin, pmax: pmax == null || isNaN(pmax) ? null : pmax
+    };
+  }
+  function correspond(b, c) {
+    if (c.du && b.date < c.du) return false;
+    if (c.au && b.date > c.au) return false;
+    if (c.sexe && b.sexe !== c.sexe) return false;
+    if (c.mode === 'aucun' ? b.mode : c.mode && b.mode !== c.mode) return false;
+    if (c.pmin != null && !(b.poids >= c.pmin)) return false;
+    if (c.pmax != null && !(b.poids <= c.pmax)) return false;
+    if (c.mots.length) {
+      var texte = sansAccents(b.prenom + ' ' + b.note);
+      if (!c.mots.every(function (m) { return texte.indexOf(m) >= 0; })) return false;
+    }
+    return true;
+  }
+  function rendreNaissances() {
+    var c = criteres(), zone = $('resultats'), total = donnees.bebes.length;
+    var nbFiltres = ['du', 'au', 'sexe', 'mode', 'pmin', 'pmax'].filter(function (k) { return c[k] != null && c[k] !== ''; }).length;
+    var filtre = nbFiltres > 0 || c.mots.length > 0;
+    var liste = filtre ? tries(donnees.bebes.filter(function (b) { return correspond(b, c); })) : tries(donnees.bebes);
+    $('nb-filtres').textContent = nbFiltres;
+    $('nb-filtres').hidden = !nbFiltres;
+    $('nb-resultats').textContent = !total ? '' : filtre ? pluriel(liste.length, 'naissance') + ' sur ' + total : pluriel(total, 'naissance');
+    $('btn-effacer-filtres').hidden = !filtre;
+    vider(zone);
+    if (!liste.length) {
+      var vide = el('div', { class: 'vide' }, [el('p', { text: total ? 'Aucune naissance ne correspond à cette recherche.' : 'Aucun bébé pour l’instant.' })]);
+      if (!total) vide.appendChild(el('button', { type: 'button', class: 'btn-principal', text: 'Ajouter un bébé', onclick: function () { ouvrirFiche(null); } }));
+      zone.appendChild(vide);
+      return;
+    }
+    liste.forEach(function (b) { zone.appendChild(bracelet(b)); });
+    ajusterPrenoms(zone);
+  }
+  formRech.addEventListener('input', rendreNaissances);
+  formRech.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (document.activeElement) document.activeElement.blur(); /* referme le clavier du téléphone */
+  });
+  $('btn-filtres').addEventListener('click', function () {
+    var ouvert = $('filtres').classList.toggle('ouvert');
+    $('btn-filtres').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+    formRech.classList.toggle('filtres-ouverts', ouvert);
+  });
+  $('btn-effacer-filtres').addEventListener('click', function () { formRech.reset(); rendreNaissances(); });
+
   /* ---------- Rendu : stats (premier jet, à enrichir) ---------- */
   function tuile(val, lib, classe) {
     return el('div', { class: 'tuile' + (classe ? ' ' + classe : '') }, [el('p', { class: 'val', text: val }), el('p', { class: 'lib', text: lib })]);
@@ -314,7 +371,9 @@
     rendreCompteur();
     rendreNavigation();
     rendreRappel();
-    if (etat.vue === 'accueil') rendreAccueil(); else rendreStats();
+    if (etat.vue === 'accueil') rendreAccueil();
+    else if (etat.vue === 'naissances') rendreNaissances();
+    else rendreStats();
   }
 
   /* ---------- Fiche : ajout, modification, suppression ---------- */
@@ -386,9 +445,12 @@
     if (ancien) donnees.bebes = donnees.bebes.map(function (b) { return b.id === ficheId ? fiche : b; });
     else donnees.bebes.push(fiche);
     if (!enregistrer()) { donnees.bebes = avant; return; }
-    etat.ancre = lire(date);
-    etat.jour = null;
-    etat.vue = 'accueil';
+    /* Depuis la vue Naissances, on y reste avec la recherche en cours ; sinon retour à l'accueil sur la date du bébé. */
+    if (etat.vue !== 'naissances') {
+      etat.ancre = lire(date);
+      etat.jour = null;
+      etat.vue = 'accueil';
+    }
     dlgFiche.close();
     toast(ancien ? 'Bracelet modifié' : 'Bracelet ajouté');
     rendre();
@@ -524,7 +586,13 @@
     var cible = ev.target.closest('[data-vue], [data-action], [data-periode], [data-fermer]');
     if (!cible) return;
     if (cible.hasAttribute('data-fermer')) { cible.closest('dialog').close(); return; }
-    if (cible.hasAttribute('data-vue')) { etat.vue = cible.getAttribute('data-vue'); rendre(); return; }
+    if (cible.hasAttribute('data-vue')) {
+      etat.vue = cible.getAttribute('data-vue');
+      rendre();
+      /* La loupe du téléphone sert à chercher : le champ prend le focus et le clavier s'ouvre. */
+      if (etat.vue === 'naissances' && cible.classList.contains('btn-rond')) $('r-texte').focus();
+      return;
+    }
     if (cible.hasAttribute('data-periode')) {
       etat.periode = cible.getAttribute('data-periode');
       if (etat.jour) etat.ancre = lire(etat.jour);

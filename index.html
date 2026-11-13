@@ -27,6 +27,9 @@
       <button type="button" data-vue="accueil">
         <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Accueil
       </button>
+      <button type="button" data-vue="naissances">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg>Naissances
+      </button>
       <button type="button" data-vue="stats">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats
       </button>
@@ -40,9 +43,14 @@
     <!-- En-tête (téléphone) -->
     <header class="haut">
       <h1 data-compteur="titre">Aucun bébé</h1>
-      <button type="button" class="btn-rond" data-action="reglages" aria-label="Réglages et sauvegarde">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-      </button>
+      <div class="haut-actions">
+        <button type="button" class="btn-rond" data-vue="naissances" aria-label="Rechercher dans les naissances">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg>
+        </button>
+        <button type="button" class="btn-rond" data-action="reglages" aria-label="Réglages et sauvegarde">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+        </button>
+      </div>
     </header>
 
     <main>
@@ -79,6 +87,60 @@
           </div>
           <div id="liste" class="liste"></div>
         </div>
+      </section>
+
+      <section id="vue-naissances" class="vue naissances" hidden>
+        <form class="recherche" id="form-recherche" role="search" novalidate>
+          <h2 class="titre-vue">Naissances</h2>
+          <div class="recherche-ligne">
+            <div class="champ champ-texte">
+              <label for="r-texte" class="masque">Rechercher</label>
+              <input id="r-texte" name="texte" type="search" placeholder="Prénom ou note" autocomplete="off" enterkeyhint="search">
+            </div>
+            <button type="button" class="btn-filtres" id="btn-filtres" aria-expanded="false" aria-controls="filtres">Filtres<span id="nb-filtres" hidden></span></button>
+          </div>
+          <div class="filtres" id="filtres">
+            <div class="champ">
+              <label for="r-du">Du</label>
+              <input id="r-du" name="du" type="date">
+            </div>
+            <div class="champ">
+              <label for="r-au">Au</label>
+              <input id="r-au" name="au" type="date">
+            </div>
+            <div class="champ">
+              <label for="r-sexe">Sexe</label>
+              <select id="r-sexe" name="sexe">
+                <option value="">Tous</option>
+                <option value="F">Filles</option>
+                <option value="M">Garçons</option>
+              </select>
+            </div>
+            <div class="champ">
+              <label for="r-mode">Mode d'accouchement</label>
+              <select id="r-mode" name="mode">
+                <option value="">Tous</option>
+                <option value="voie-basse">Voie basse</option>
+                <option value="instrumentale">Instrumentale</option>
+                <option value="cesarienne">Césarienne</option>
+                <option value="aucun">Non renseigné</option>
+              </select>
+            </div>
+            <div class="champ">
+              <label for="r-pmin">Poids min. (g)</label>
+              <input id="r-pmin" name="pmin" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="2500">
+            </div>
+            <div class="champ">
+              <label for="r-pmax">Poids max. (g)</label>
+              <input id="r-pmax" name="pmax" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="4000">
+            </div>
+          </div>
+          <div class="liste-tete">
+            <h2 id="nb-resultats"></h2>
+            <button type="button" class="btn-lien" id="btn-effacer-filtres" hidden>Effacer les filtres</button>
+          </div>
+        </form>
+        <div id="resultats" class="liste resultats"></div>
       </section>
 
       <section id="vue-stats" class="vue stats" hidden>

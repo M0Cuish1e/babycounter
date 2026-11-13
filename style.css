@@ -59,8 +59,12 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 
 .haut { display: flex; align-items: center; justify-content: space-between; padding: calc(14px + env(safe-area-inset-top)) 20px 8px; }
 .haut h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.haut-actions { display: flex; gap: 8px; }
 
 .btn-rond { width: 44px; height: 44px; border: 0; border-radius: 22px; background: var(--voile); display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+.btn-rond.actif { background: var(--encre); color: #fff; }
+.btn-lien { min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 14px; font-weight: 700; text-decoration: underline; white-space: nowrap; }
+.masque { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .btn-fleche { width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; display: flex; align-items: center; justify-content: center; padding: 0; }
 .btn-principal { min-height: 52px; padding: 0 22px; border: 0; border-radius: 26px; background: var(--encre); color: #fff; font-weight: 500; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-danger { min-height: 52px; padding: 0 18px; border: 0; border-radius: 26px; background: transparent; color: var(--danger); font-weight: 500; }
@@ -148,6 +152,23 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 /* ---------- Rappel de sauvegarde ---------- */
 .rappel { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--voile); border-radius: 16px; padding: 2px 6px 2px 14px; margin-bottom: 10px; font-size: 14px; }
 .rappel button { min-height: 44px; border: 0; background: transparent; font-weight: 700; text-decoration: underline; padding: 0 8px; white-space: nowrap; }
+
+/* ---------- Naissances : liste complète et recherche ---------- */
+.naissances { padding-bottom: 16px; }
+.recherche { position: sticky; top: 0; z-index: 2; background: var(--fond); display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px; }
+.recherche.filtres-ouverts { position: static; } /* filtres ouverts : trop haut pour rester figé sur téléphone */
+.recherche .titre-vue { margin: 4px 0 0; }
+.recherche .liste-tete { margin-top: 0; align-items: center; min-height: 44px; }
+.recherche-ligne { display: flex; gap: 8px; align-items: flex-end; }
+.champ-texte { flex: 1; min-width: 0; }
+.recherche input, .champ select { -webkit-appearance: none; appearance: none; }
+.champ select { width: 100%; min-height: 48px; border: 1.5px solid var(--trait); border-radius: 14px; background: var(--blanc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2323254A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 18px; padding: 0 38px 0 14px; font-size: 16px; font-weight: 500; }
+.champ select:focus { outline: none; border-color: var(--encre); box-shadow: 0 0 0 3px rgba(35, 37, 74, 0.12); }
+.btn-filtres { min-height: 48px; padding: 0 16px; border: 1.5px solid var(--trait); border-radius: 24px; background: var(--blanc); font-weight: 500; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.btn-filtres[aria-expanded="true"] { background: var(--encre); border-color: var(--encre); color: #fff; }
+#nb-filtres { min-width: 20px; height: 20px; border-radius: 10px; padding: 0 6px; background: var(--voile); color: var(--encre); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; }
+.filtres { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.filtres.ouvert { display: grid; }
 
 /* ---------- Stats ---------- */
 .stats { overflow-y: auto; padding-bottom: 16px; }
@@ -257,6 +278,12 @@ legend, .champ label { display: block; padding: 0; font-size: 13px; color: var(-
   .moisc .nom-court { display: none; } .moisc .nom-long { display: inline; }
   .moisc .total { font-size: 40px; letter-spacing: -0.02em; }
   .moisc .barre-fg { height: 8px; gap: 3px; }
+
+  .filtres, .filtres.ouvert { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .btn-filtres { display: none; }
+  .recherche.filtres-ouverts { position: sticky; }
+  .champ-texte { max-width: 520px; }
+  .resultats { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-content: start; }
 
   .stats { max-width: 720px; }
   .tuiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
