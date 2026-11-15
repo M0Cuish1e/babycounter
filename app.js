@@ -396,6 +396,14 @@
   var MODES_STATS = [
     ['naturel', 'Naturel', 'var(--mode-naturel)'], ['instrumente', 'Instrumenté', 'var(--mode-instru)'], ['', 'Non renseigné', 'var(--trait)']
   ];
+  /* Les trois critères de l'accouchement, dans l'ordre de la fiche. « notable » sert aux croisements du détail. */
+  var CRITERES = [
+    { cle: 'travail', titre: 'Début du travail', notable: 'declenche', valeurs: [
+      ['spontane', 'Spontané', 'var(--travail-spontane)'], ['declenche', 'Déclenché', 'var(--travail-declenche)'], ['', 'Non renseigné', 'var(--trait)']] },
+    { cle: 'peridurale', titre: 'Péridurale', notable: 'avec', valeurs: [
+      ['avec', 'Avec péri', 'var(--peri-avec)'], ['sans', 'Sans péri', 'var(--peri-sans)'], ['', 'Non renseigné', 'var(--trait)']] },
+    { cle: 'mode', titre: 'Mode d’accouchement', notable: 'instrumente', valeurs: MODES_STATS }
+  ];
   var etatStats = {};
   function pct(n, t) { return t ? Math.round(n / t * 100) + ' %' : '—'; }
   function fg(liste) { var f = 0; liste.forEach(function (b) { if (b.sexe === 'F') f++; }); return { f: f, g: liste.length - f }; }
@@ -533,14 +541,18 @@
         tuile('F', String(s.f), pct(s.f, t), s.f > 1 ? 'filles' : 'fille'),
         tuile('M', String(s.g), pct(s.g, t), s.g > 1 ? 'garçons' : 'garçon')
       ]));
-      var barre = el('div', { class: 'st-barre-seg', 'aria-hidden': 'true' }), lignes = el('div', { class: 'st-modes' });
-      MODES_STATS.forEach(function (md) {
-        var n = liste.filter(function (b) { return b.mode === md[0]; }).length;
-        if (!n && !md[0]) return;
-        if (n) barre.appendChild(el('i', { style: 'flex:' + n + ';background:' + md[2] }));
-        lignes.appendChild(el('p', {}, [el('i', { style: 'background:' + md[2] }), el('span', { text: md[1] }), el('b', { text: n }), el('em', { text: pct(n, t) })]));
+      var reparts = el('div', { class: 'st-reparts' });
+      CRITERES.forEach(function (cr) {
+        var barre = el('div', { class: 'st-barre-seg', 'aria-hidden': 'true' }), lignes = el('div', { class: 'st-modes' });
+        cr.valeurs.forEach(function (v) {
+          var n = liste.filter(function (b) { return b[cr.cle] === v[0]; }).length;
+          if (!n && !v[0]) return;
+          if (n) barre.appendChild(el('i', { style: 'flex:' + n + ';background:' + v[2] }));
+          lignes.appendChild(el('p', {}, [el('i', { style: 'background:' + v[2] }), el('span', { text: v[1] }), el('b', { text: n }), el('em', { text: pct(n, t) })]));
+        });
+        reparts.appendChild(el('div', { class: 'st-repart' }, [el('p', { class: 'st-lib', text: cr.titre }), barre, lignes]));
       });
-      corps.appendChild(el('div', { class: 'st-repart' }, [el('p', { class: 'st-lib', text: 'Mode d’accouchement' }), barre, lignes]));
+      corps.appendChild(reparts);
     }, { large: true });
   }
 
@@ -656,33 +668,50 @@
     });
   }
 
-  /* ---------- Stats : mode d'accouchement ---------- */
-  function blocModes() {
-    return blocStats('modes', 'Mode d’accouchement', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+  /* ---------- Stats : accouchement (début du travail, péridurale, mode) ---------- */
+  function blocAccouchement() {
+    return blocStats('accouchement', 'Accouchement', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
       if (stVide(corps, liste)) return;
-      var t = liste.length, conteneur = el('div', { class: 'st-barres' }), detail;
-      var lignes = MODES_STATS.map(function (md) { return { md: md, l: liste.filter(function (b) { return b.mode === md[0]; }) }; })
-        .filter(function (x) { return x.md[0] || x.l.length; });
-      var max = Math.max.apply(null, lignes.map(function (x) { return x.l.length; })) || 1;
-      lignes.forEach(function (x) {
-        var b = el('button', { type: 'button', class: 'st-barre', 'aria-label': x.md[1] + ' : ' + x.l.length + ', ' + pct(x.l.length, t) }, [
-          el('span', { text: x.md[1] }),
-          el('span', { class: 'st-piste' }, [el('i', { style: 'width:' + (x.l.length / max * 100) + '%;background:' + x.md[2] })]),
-          el('b', {}, [document.createTextNode(String(x.l.length)), el('small', { text: ' · ' + pct(x.l.length, t) })])
-        ]);
-        function voir() { choisir(conteneur, b); montrer(x); }
-        b.addEventListener('click', voir);
-        b.addEventListener('mouseenter', voir);
-        conteneur.appendChild(b);
+      var t = liste.length, conteneur = el('div', { class: 'st-groupes' }), detail, premier = null;
+      CRITERES.forEach(function (cr) {
+        var groupe = el('div', { class: 'st-barres', role: 'group', 'aria-label': cr.titre }, [el('p', { class: 'st-lib', text: cr.titre })]);
+        var lignes = cr.valeurs.map(function (v) { return { cr: cr, v: v, l: liste.filter(function (b) { return b[cr.cle] === v[0]; }) }; })
+          .filter(function (x) { return x.v[0] || x.l.length; });
+        lignes.forEach(function (x) {
+          var b = el('button', { type: 'button', class: 'st-barre', 'aria-label': cr.titre + ', ' + x.v[1] + ' : ' + x.l.length + ', ' + pct(x.l.length, t) }, [
+            el('span', { text: x.v[1] }),
+            el('span', { class: 'st-piste' }, [el('i', { style: 'width:' + (x.l.length / t * 100) + '%;background:' + x.v[2] })]),
+            el('b', {}, [document.createTextNode(String(x.l.length)), el('small', { text: ' · ' + pct(x.l.length, t) })])
+          ]);
+          function voir() { choisir(conteneur, b); montrer(x); }
+          b.addEventListener('click', voir);
+          b.addEventListener('mouseenter', voir);
+          groupe.appendChild(b);
+          if (!premier) premier = x;
+        });
+        conteneur.appendChild(groupe);
       });
       corps.appendChild(conteneur);
       detail = bandeDetail(corps);
+      /* Détail : filles / garçons, poids moyen, et la part des deux autres critères dans ce groupe
+         (ex. pour « Déclenché » : part avec péri et part d'instrumentés). */
+      var NOTABLE = { travail: 'déclenchés', peridurale: 'avec péri', mode: 'instrumentés' };
       function montrer(x) {
-        var pm = moyenne(x.l, 'poids'), bo = bornesPeriode(per);
-        remplirDetail(detail, x.md[1], x.l.length ? texteFG(x.l) + (pm ? ' · poids moyen ' + textePoids(pm) : '') : 'aucune naissance',
-          x.l.length ? { du: bo.du, au: bo.au, mode: x.md[0] || 'aucun' } : null);
+        var pm = moyenne(x.l, 'poids'), bo = bornesPeriode(per), morceaux = [];
+        if (x.l.length) {
+          morceaux.push(texteFG(x.l));
+          if (pm) morceaux.push('poids moyen ' + textePoids(pm));
+          CRITERES.forEach(function (autre) {
+            if (autre === x.cr) return;
+            var n = x.l.filter(function (b) { return b[autre.cle] === autre.notable; }).length;
+            morceaux.push(pct(n, x.l.length) + ' ' + NOTABLE[autre.cle]);
+          });
+        }
+        var filtres = { du: bo.du, au: bo.au };
+        filtres[x.cr.cle] = x.v[0] || 'aucun';
+        remplirDetail(detail, x.cr.titre + ' : ' + x.v[1].toLowerCase(), x.l.length ? morceaux.join(' · ') : 'aucune naissance', x.l.length ? filtres : null);
       }
-      montrer(lignes[0]);
+      montrer(premier);
     });
   }
 
@@ -831,7 +860,7 @@
     var zone = $('stats');
     vider(zone);
     if (!donnees.bebes.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les stats apparaîtront dès le premier bébé ajouté.' })); return; }
-    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine(), blocHorloge(), blocModes(), blocCarteAnnee(), blocNuage()]));
+    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine(), blocHorloge(), blocAccouchement(), blocCarteAnnee(), blocNuage()]));
   }
 
   function rendreRappel() {

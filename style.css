@@ -221,7 +221,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .st-repart { display: flex; flex-direction: column; gap: 8px; }
 .st-barre-seg { display: flex; gap: 2px; height: 12px; }
 .st-barre-seg i { border-radius: 4px; min-width: 3px; }
-.st-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 24px; font-size: 14px; }
+.st-modes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; font-size: 14px; }
 .st-modes p { display: flex; align-items: center; gap: 7px; }
 .st-modes i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 .st-modes b { margin-left: auto; font-variant-numeric: tabular-nums; }
@@ -252,6 +252,9 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .st-h-lib { font-family: inherit; font-size: 10.5px; fill: var(--gris); }
 .st-h-repere { font-family: inherit; font-size: 11px; font-weight: 700; fill: var(--gris); }
 .st-barres { display: flex; flex-direction: column; gap: 2px; }
+.st-groupes { display: flex; flex-direction: column; gap: 14px; }
+.st-barres > .st-lib { padding-left: 8px; }
+.st-reparts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 28px; }
 .st-barre { display: grid; grid-template-columns: 108px minmax(0, 1fr) 76px; align-items: center; gap: 10px; min-height: 40px; padding: 4px 8px; border: 0; border-radius: 10px; background: transparent; text-align: left; font-size: 14px; }
 .st-barre:hover, .st-barre.st-choisi { background: var(--case); }
 .st-piste { height: 14px; display: flex; }
