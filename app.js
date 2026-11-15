@@ -1174,7 +1174,41 @@
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ajusterPrenoms(document); });
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+
+  /* ---------- Hors ligne et installation ---------- */
+  var sw = ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) ? navigator.serviceWorker : null;
+  if (sw) {
+    /* updateViaCache: 'none' : sw.js est toujours relu sur le réseau, jamais dans le cache HTTP. */
+    sw.register('sw.js', { updateViaCache: 'none' }).catch(function () {});
+    /* Une nouvelle version vient de s'installer en entier : on recharge pour l'afficher,
+       sauf si une fenêtre est ouverte (saisie en cours) ; elle s'affichera à la prochaine ouverture. */
+    var dejaControlee = !!sw.controller;
+    sw.addEventListener('controllerchange', function () {
+      if (dejaControlee && !document.querySelector('dialog[open]')) location.reload();
+      dejaControlee = true;
+    });
+  }
+  /* Version installée, demandée au service worker, affichée en bas des réglages. */
+  function majVersion() {
+    var p = $('info-version');
+    if (!sw || !sw.controller) { p.textContent = 'Pas encore disponible hors ligne : ouvrir l’appli une fois avec du réseau.'; return; }
+    var canal = new MessageChannel();
+    canal.port1.onmessage = function (ev) { p.textContent = 'Version ' + ev.data + ' · disponible hors ligne'; };
+    sw.controller.postMessage('version', [canal.port2]);
+  }
+  dlgReglages.addEventListener('toggle', function () { if (dlgReglages.open) majVersion(); });
+
+  /* Aide à l'installation : Safari sur iPhone, page pas ouverte depuis l'icône.
+     navigator.standalone n'existe que sur iPhone et iPad (false dans Safari, true dans l'appli).
+     « ?installer » dans l'adresse force l'affichage, pour tester sur ordinateur. */
+  var dansSafariIos = navigator.standalone === false && !matchMedia('(display-mode: standalone)').matches;
+  var aideVue = false;
+  try { aideVue = sessionStorage.getItem('babycounter:aide-installation') === 'vue'; } catch (e) {}
+  if ((dansSafariIos && !aideVue) || /[?&]installer\b/.test(location.search)) {
+    var dlgInstaller = $('dlg-installer');
+    dlgInstaller.addEventListener('close', function () {
+      try { sessionStorage.setItem('babycounter:aide-installation', 'vue'); } catch (e) {}
+    });
+    dlgInstaller.showModal();
   }
 })();

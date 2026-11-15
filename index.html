@@ -6,6 +6,12 @@
 <title>Babycounter</title>
 <meta name="description" content="Carnet personnel des naissances : un bracelet par bébé.">
 <meta name="theme-color" content="#FBFBFD">
+<!-- iPhone : plein écran sans barre Safari, nom sous l'icône, barre d'état sombre sur fond clair -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Babycounter">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -306,6 +312,28 @@
     </button>
   </div>
   <input type="file" id="fichier-import" accept="application/json,.json" hidden>
+  <p class="aide version" id="info-version"></p>
+</dialog>
+
+<!-- Aide à l'installation : seulement dans Safari sur iPhone, tant que l'appli n'est pas ouverte depuis son icône -->
+<dialog id="dlg-installer" class="dlg" aria-labelledby="installer-titre">
+  <div class="dlg-tete">
+    <h2 id="installer-titre">Installer Babycounter</h2>
+  </div>
+  <p class="aide">Pour l'utiliser comme une appli, même sans réseau, l'ajouter une fois à l'écran d'accueil :</p>
+  <ol class="etapes">
+    <li><span class="etape-num">1</span><p>Toucher le bouton <strong>Partager</strong>
+      <svg class="etape-icone" aria-label="(carré avec une flèche vers le haut)" viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M8 10H6.5A1.5 1.5 0 0 0 5 11.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 17.5 10H16"/></svg>
+      de Safari. S'il n'apparaît pas, toucher d'abord <strong>…</strong> en bas de l'écran.</p></li>
+    <li><span class="etape-num">2</span><p>Choisir <strong>Sur l'écran d'accueil</strong>
+      <svg class="etape-icone" aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>.
+      Si l'option n'est pas visible, faire défiler la liste ou toucher <strong>Afficher plus</strong>.</p></li>
+    <li><span class="etape-num">3</span><p>Laisser <strong>Ouvrir comme app web</strong> activé, toucher <strong>Ajouter</strong>, puis ouvrir Babycounter depuis sa nouvelle icône.</p></li>
+  </ol>
+  <p class="aide installer-note">Les bébés saisis ici, dans Safari, ne passent pas dans l'appli installée : tout saisir dans l'appli.</p>
+  <div class="dlg-actions">
+    <button type="button" class="btn-secondaire" data-fermer>Continuer dans Safari</button>
+  </div>
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
