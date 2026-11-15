@@ -7,7 +7,8 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 - **Format** : PWA statique, sans build ni dépendance. HTML, CSS et JS écrits à la main, un fichier chacun. Ne pas introduire de framework ni d'étape de compilation sans en parler.
 - **Données** : uniquement sur l'appareil (`localStorage`, clé `babycounter:donnees`). Aucun serveur, aucun appel réseau, aucune ressource externe (polices et icônes sont dans le repo).
 - **Confidentialité** : ce sont des données de naissance couvertes par le secret professionnel. Pas de synchronisation en ligne, pas de télémétrie, pas de champ sur la mère ou la maternité.
-- **Hébergement** : GitHub Pages depuis `main`. Tous les chemins sont relatifs pour fonctionner sous `/babycounter/`.
+- **Hébergement** : GitHub Pages depuis `main`. Tous les chemins sont relatifs pour fonctionner sous `/babycounter/` Le dépôt n'est public que le temps d'une installation ou d'une mise à jour sur l'iPhone, puis repasse en privé (Pages renvoie alors 404) : l'appli installée doit fonctionner indéfiniment depuis son cache. Ne jamais changer l'adresse : les données y sont liées.
+- **Hors ligne** : `sw.js` tient un cache par `VERSION`, rempli en entier à l'installation (types de fichiers vérifiés), jamais réécrit par une réponse du réseau ; une nouvelle version ne remplace l'ancienne qu'une fois complète. Usage visé : le téléphone (iPhone, appli installée depuis Safari) ; la version ordinateur n'est plus prioritaire. Dans Safari sur iPhone, un écran d'aide donne les étapes d'installation (`?installer` dans l'adresse pour le voir ailleurs). La version installée est affichée en bas des réglages.
 - **Design** : piste « Bracelets de naissance ». Chaque bébé est un bracelet en « ruban de papier à liseré » : bande blanche aux coins arrondis (12 px, 18 px pour l’aperçu), liseré de 6 px rose ou bleu en haut et en bas, fente vide à gauche, trois petits trous à droite (aperçu de la fiche en plus grand ; gris quand aucun sexe n'est choisi). Prénom en écriture manuscrite (Caveat) dans l'encre du sexe, date et heure en gris, poids en encre, reste de l'interface épuré en DM Sans, encre indigo `#23254A` sur fond `#FBFBFD`. Les couleurs sont des variables CSS en tête de `style.css`.
 - **Accueil** : sélecteur Semaine / Mois / Année, calendrier, puis liste des bracelets de la période affichée. Toucher un jour filtre la liste sur ce jour.
 - **Vue Semaine** : noms des jours en haut comme en vue Mois ; chaque jour est une colonne de 0 h à 24 h où les bébés sont placés à leur heure (`placerFrises()`), les bébés sans heure dans une bande « ? » en bas.
@@ -27,6 +28,7 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 - `normaliser()` dans `app.js` est le point d'entrée unique du format des fiches. Tout nouveau champ s'y ajoute avec une valeur par défaut, pour que les fiches et les sauvegardes existantes restent lisibles. Les champs inconnus sont conservés.
 - Tester en téléphone (390 px) et en ordinateur (1280 px) avant de pousser.
 - Si un fichier est ajouté, l'ajouter aussi à la liste `FICHIERS` de `sw.js`, sinon il manquera hors ligne.
+- À chaque publication sur `main` qui doit atteindre l'iPhone, changer `VERSION` dans `sw.js` (date du jour, `.2` pour une deuxième le même jour). Sans cela, l'appli installée garde l'ancienne version.
 - Guillaume préfère, pour une petite modification, recevoir seulement les lignes à changer et leur emplacement plutôt que le fichier entier.
 
 ## État
@@ -35,7 +37,7 @@ Fait : stockage, accueil, vue Naissances avec recherche, Stats, Records, ajout, 
 
 À faire :
 
-- Vérifier l'installation et l'usage hors ligne sur un vrai téléphone, en particulier Safari sur iPhone, jamais testé (GitHub Pages est actif).
+- Vérifier l'installation et l'usage hors ligne sur un vrai iPhone, dépôt repassé en privé (scénario testé en local seulement, voir le README).
 - Sauvegarde : à rediscuter avec Guillaume (rappel, fréquence, autres moyens que l'export manuel).
 - Champs supplémentaires encore possibles, à confirmer avec l'utilisatrice : terme, présentation, périnée, jumeaux.
 
