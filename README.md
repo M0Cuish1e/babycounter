@@ -8,7 +8,7 @@ Pour l'installer sur un iPhone, voir [Installation et mises à jour sur iPhone](
 
 - **Rien à installer** : c'est une page web, installable comme une appli (PWA) et utilisable hors ligne.
 - **Données sur l'appareil uniquement** : tout est stocké dans le navigateur (`localStorage`). Aucun serveur, aucun envoi réseau.
-- **Sauvegarde** : export et import d'un fichier JSON depuis « Réglages et sauvegarde ».
+- **Sauvegarde** : les bébés sont enregistrés automatiquement sur l'appareil. Pour une copie ailleurs, « Réglages et sauvegarde » > « Exporter mes données » : sur iPhone, le menu Partager s'ouvre, choisir « Enregistrer dans Fichiers » puis iCloud Drive. Un rappel apparaît tous les 10 bébés ajoutés depuis le dernier export. L'import recharge un fichier exporté.
 - **Données d'essai** : des fichiers fictifs à importer pour tester sont dans [`exemples/`](exemples/) ([étudiante, le plus réaliste](https://m0cuish1e.github.io/babycounter/exemples/essai-etudiante.json), [petit](https://m0cuish1e.github.io/babycounter/exemples/essai-petit.json), [deux ans](https://m0cuish1e.github.io/babycounter/exemples/essai-deux-ans.json), [cas limites](https://m0cuish1e.github.io/babycounter/exemples/essai-limites.json)). « Tout effacer » les retire.
 
 ## Installation et mises à jour sur iPhone
@@ -50,7 +50,7 @@ Si le téléchargement de la nouvelle version échoue en cours de route (réseau
 - **Données effacées par iOS** : iOS peut, rarement, effacer les données d'une appli web, par exemple quand le téléphone manque de place, ou si les données de sites sont effacées dans **Réglages** > **Safari** / **Applications** > **Safari** > **Effacer historique et données de sites**. L'appli demande à iOS de garder ses données, sans garantie. Si l'appli ne s'ouvre plus (page d'erreur 404 de GitHub) ou s'ouvre vide, réinstaller comme pour une première installation, puis restaurer un export.
 - **Changement d'iPhone** : la sauvegarde iCloud ne transfère pas toujours les données des applis web. Faire un export juste avant, réinstaller sur le nouveau téléphone, puis importer.
 
-**Restaurer à partir d'un export** : dans l'appli installée, **Réglages** > **Importer une sauvegarde**, choisir le fichier `.json` (dans Fichiers, iCloud Drive ou une pièce jointe enregistrée). L'import ajoute les bébés du fichier à ceux déjà présents, sans créer de doublons. Seuls les bébés présents dans le dernier export sont récupérés : d'où le rappel d'export après un mois sans sauvegarde.
+**Restaurer à partir d'un export** : dans l'appli installée, **Réglages** > **Importer une sauvegarde**, choisir le fichier `.json` (dans Fichiers, iCloud Drive ou une pièce jointe enregistrée). L'import ajoute les bébés du fichier à ceux déjà présents, sans créer de doublons. Seuls les bébés présents dans le dernier export sont récupérés : d'où le rappel d'export tous les 10 bébés ajoutés.
 
 ## Fichiers
 

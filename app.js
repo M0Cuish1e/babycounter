@@ -893,18 +893,22 @@
     zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine(), blocHorloge(), blocAccouchement(), blocCarteAnnee(), blocNuage()]));
   }
 
+  /* Rappel de sauvegarde : tous les 10 bébés ajoutés depuis le dernier export.
+     Fermé à la main, il revient au bout de 10 nouveaux bébés. */
+  var RAPPEL_TOUS_LES = 10;
+  function nouveauxDepuisExport() {
+    var depuis = donnees.dernierExport || '';
+    return donnees.bebes.filter(function (b) { return b.cree > depuis; }).length;
+  }
   function rendreRappel() {
-    var montrer = false;
-    if (donnees.bebes.length) {
-      var dernier = donnees.bebes.reduce(function (m, b) { return b.modifie > m ? b.modifie : m; }, '');
-      var reference = donnees.dernierExport || donnees.bebes.reduce(function (m, b) { return b.cree < m ? b.cree : m; }, dernier);
-      var jours = (Date.now() - new Date(reference).getTime()) / 86400000;
-      montrer = jours > 30 && (!donnees.dernierExport || dernier > donnees.dernierExport);
-      /* Fermé à la main : le rappel revient un mois plus tard s'il n'y a toujours pas eu d'export. */
-      if (donnees.rappelMasque && (Date.now() - new Date(donnees.rappelMasque).getTime()) / 86400000 < 30) montrer = false;
-      $('rappel').firstElementChild.textContent = donnees.dernierExport ? 'Sauvegarde de plus d’un mois.' : 'Pas encore de sauvegarde.';
+    var depuis = [donnees.dernierExport, donnees.rappelMasque].filter(Boolean).sort().pop() || '';
+    var aRappeler = donnees.bebes.filter(function (b) { return b.cree > depuis; }).length >= RAPPEL_TOUS_LES;
+    if (aRappeler) {
+      var n = nouveauxDepuisExport();
+      $('rappel').firstElementChild.textContent = donnees.dernierExport
+        ? pluriel(n, 'bébé') + ' depuis la dernière sauvegarde.' : 'Pas encore de sauvegarde (' + pluriel(n, 'bébé') + ').';
     }
-    $('rappel').hidden = !montrer;
+    $('rappel').hidden = !aRappeler;
   }
 
   function rendre() {
@@ -1031,28 +1035,61 @@
   var dlgReglages = $('dlg-reglages');
   function majReglages() {
     var n = donnees.bebes.length;
-    $('info-nombre').textContent = n ? 'Télécharge un fichier avec ' + pluriel(n, 'bébé') : 'Aucun bébé à exporter pour l’instant';
+    var partage = navigator.canShare && matchMedia('(pointer: coarse)').matches;
+    $('info-nombre').textContent = !n ? 'Aucun bébé à exporter pour l’instant'
+      : (partage ? 'Enregistrer une copie (' + pluriel(n, 'bébé') + ') dans Fichiers ou iCloud Drive' : 'Télécharge un fichier avec ' + pluriel(n, 'bébé'));
     var info = $('info-export');
     if (donnees.dernierExport) {
-      var d = new Date(donnees.dernierExport);
-      info.textContent = 'Dernier export le ' + quantieme(d.getDate()) + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear() + '.';
-      info.hidden = false;
-    } else info.hidden = true;
+      var d = new Date(donnees.dernierExport), nouveaux = nouveauxDepuisExport();
+      info.textContent = 'Dernier export le ' + quantieme(d.getDate()) + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear()
+        + (nouveaux ? ', ' + pluriel(nouveaux, 'bébé') + ' ajouté' + (nouveaux > 1 ? 's' : '') + ' depuis.' : ', rien de nouveau depuis.');
+    } else info.textContent = n ? 'Aucun export pour l’instant.' : '';
+    info.hidden = !info.textContent;
+    majProtection();
     reinitEffacement();
   }
+  /* Stockage persistant : l'appli le demande au démarrage ; on affiche si le système l'a accordé. */
+  function majProtection() {
+    var p = $('info-protection');
+    if (!(navigator.storage && navigator.storage.persisted)) { p.textContent = 'Protection des données : non vérifiable sur ce navigateur.'; return; }
+    navigator.storage.persisted().then(function (oui) {
+      p.textContent = oui ? 'Données protégées : le système ne les effacera pas pour libérer de la place.'
+        : 'Données non protégées : le système pourrait les effacer s’il manque de place. Exporter régulièrement.';
+    }).catch(function () { p.textContent = ''; });
+  }
   function ouvrirReglages() { majReglages(); dlgReglages.showModal(); }
-  function exporter() {
-    if (!donnees.bebes.length) return toast('Aucun bébé à exporter.');
-    var contenu = JSON.stringify({ app: 'babycounter', version: VERSION, exporte: new Date().toISOString(), bebes: donnees.bebes }, null, 2);
-    var url = URL.createObjectURL(new Blob([contenu], { type: 'application/json' }));
-    var a = el('a', { href: url, download: 'babycounter-' + iso(new Date()) + '.json' });
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  /* Sur iPhone (et autres écrans tactiles qui savent partager un fichier), l'export ouvre
+     le menu Partager : « Enregistrer dans Fichiers » puis iCloud Drive. Ailleurs, téléchargement. */
+  function partageFichierPossible(f) {
+    return !!(navigator.canShare && matchMedia('(pointer: coarse)').matches && navigator.canShare({ files: [f] }));
+  }
+  function exportFait() {
     donnees.dernierExport = new Date().toISOString();
     enregistrer();
     toast('Sauvegarde exportée');
     rendreRappel();
     if (dlgReglages.open) majReglages();
+  }
+  function exporter() {
+    if (!donnees.bebes.length) return toast('Aucun bébé à exporter.');
+    var contenu = JSON.stringify({ app: 'babycounter', version: VERSION, exporte: new Date().toISOString(), bebes: donnees.bebes }, null, 2);
+    var nom = 'babycounter-' + iso(new Date()) + '.json';
+    var fichier = typeof File === 'function' ? new File([contenu], nom, { type: 'application/json' }) : null;
+    if (fichier && partageFichierPossible(fichier)) {
+      navigator.share({ files: [fichier], title: 'Sauvegarde Babycounter' }).then(exportFait).catch(function (err) {
+        if (err && err.name === 'AbortError') toast('Export annulé');
+        else telecharger(contenu, nom);
+      });
+      return;
+    }
+    telecharger(contenu, nom);
+  }
+  function telecharger(contenu, nom) {
+    var url = URL.createObjectURL(new Blob([contenu], { type: 'application/json' }));
+    var a = el('a', { href: url, download: nom });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    exportFait();
   }
   function importer(fichier) {
     var lecteur = new FileReader();

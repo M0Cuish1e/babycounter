@@ -33,12 +33,12 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 
 ## État
 
-Fait : stockage, accueil, vue Naissances avec recherche, Stats, Records, ajout, modification, suppression, export et import JSON (l'import fusionne par identifiant), mise en page téléphone et ordinateur, manifeste, service worker, rappel de sauvegarde après un mois.
+Fait : stockage, accueil, vue Naissances avec recherche, Stats, Records, ajout, modification, suppression, export et import JSON (l'import fusionne par identifiant), mise en page téléphone et ordinateur, manifeste, service worker, rappel de sauvegarde tous les 10 bébés ajoutés depuis le dernier export (fermé à la main, il revient 10 bébés plus tard), export par le menu Partager sur téléphone (Fichiers, iCloud Drive), état de la protection des données (`navigator.storage.persisted()`) dans les réglages.
 
 À faire :
 
 - Vérifier l'installation et l'usage hors ligne sur un vrai iPhone, dépôt repassé en privé (scénario testé en local seulement, voir le README).
-- Sauvegarde : à rediscuter avec Guillaume (rappel, fréquence, autres moyens que l'export manuel).
+- Sauvegarde : décidé avec Guillaume, enregistrement automatique sur l'iPhone, copie dans le cloud par export manuel (pas de synchronisation automatique : ni serveur, ni écriture en arrière-plan possible dans iCloud Drive).
 - Champs supplémentaires encore possibles, à confirmer avec l'utilisatrice : terme, présentation, périnée, jumeaux.
 
 ## Lancer en local

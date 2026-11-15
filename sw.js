@@ -13,7 +13,7 @@
 
    Pour publier une mise à jour : changer VERSION (par exemple la date du jour).
    Si un fichier est ajouté à l'appli, l'ajouter aussi à FICHIERS. */
-var VERSION = '2026-11-15.1';
+var VERSION = '2026-11-15.2';
 var PREFIXE = 'babycounter-';
 var CACHE = PREFIXE + VERSION;
 var FICHIERS = [
