@@ -955,7 +955,7 @@
     }
     form.date.max = iso(new Date());
     majApercu();
-    dlgFiche.showModal();
+    ouvrirFenetre(dlgFiche);
     ajusterPrenoms($('apercu'));
     dlgFiche.scrollTop = 0;
   }
@@ -1057,7 +1057,7 @@
         : 'Données non protégées : le système pourrait les effacer s’il manque de place. Exporter régulièrement.';
     }).catch(function () { p.textContent = ''; });
   }
-  function ouvrirReglages() { majReglages(); dlgReglages.showModal(); }
+  function ouvrirReglages() { majReglages(); ouvrirFenetre(dlgReglages); }
   /* Sur iPhone (et autres écrans tactiles qui savent partager un fichier), l'export ouvre
      le menu Partager : « Enregistrer dans Fichiers » puis iCloud Drive. Ailleurs, téléchargement. */
   function partageFichierPossible(f) {
@@ -1200,6 +1200,10 @@
     });
   });
 
+  /* Ouvre une fenêtre en lui donnant le focus à elle, plutôt qu'au bouton Fermer
+     (Safari l'entourait sinon d'un cadre foncé). */
+  function ouvrirFenetre(d) { d.showModal(); d.focus(); }
+
   /* ---------- Démarrage ---------- */
   charger();
   rendre();
@@ -1246,6 +1250,6 @@
     dlgInstaller.addEventListener('close', function () {
       try { sessionStorage.setItem('babycounter:aide-installation', 'vue'); } catch (e) {}
     });
-    dlgInstaller.showModal();
+    ouvrirFenetre(dlgInstaller);
   }
 })();
