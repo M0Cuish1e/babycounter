@@ -398,7 +398,7 @@
   ];
   /* Les trois critères de l'accouchement, dans l'ordre de la fiche. « notable » sert aux croisements du détail. */
   var CRITERES = [
-    { cle: 'travail', titre: 'Début du travail', notable: 'declenche', valeurs: [
+    { cle: 'travail', titre: 'Travail', notable: 'declenche', valeurs: [
       ['spontane', 'Spontané', 'var(--travail-spontane)'], ['declenche', 'Déclenché', 'var(--travail-declenche)'], ['', 'Non renseigné', 'var(--trait)']] },
     { cle: 'peridurale', titre: 'Péridurale', notable: 'avec', valeurs: [
       ['avec', 'Avec péri', 'var(--peri-avec)'], ['sans', 'Sans péri', 'var(--peri-sans)'], ['', 'Non renseigné', 'var(--trait)']] },
