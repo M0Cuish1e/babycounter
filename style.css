@@ -33,6 +33,9 @@
   --rose: #FFD3E0; --rose-bord: #F29BB7; --rose-encre: #6E1836; --rose-vif: #E8799E;
   --bleu: #CDE5FA; --bleu-bord: #8DBEEA; --bleu-encre: #143A63; --bleu-vif: #5FA3E0;
   --danger: #A8243F;
+  /* Modes d'accouchement dans les stats (le rose et le bleu restent réservés aux filles et garçons) */
+  --mode-vb: #6A6FC4; --mode-instr: #D9963A; --mode-ces: #2FA38A;
+  --heure: #6E72A0;
   --main: 'Caveat', 'Segoe Script', cursive;
 }
 
@@ -180,17 +183,48 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .filtres.ouvert { display: grid; }
 
 /* ---------- Stats ---------- */
-.stats { overflow-y: auto; padding-bottom: 16px; }
+.stats { overflow-y: auto; padding-bottom: 24px; }
 .titre-vue { font-size: 22px; font-weight: 700; margin: 4px 0 14px; }
-.tuiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.tuile { background: var(--case); border-radius: 18px; padding: 14px 16px; }
-.tuile .val { font-size: 28px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
-.tuile .lib { font-size: 14px; color: var(--gris); }
-.tuile.F { background: var(--rose); color: var(--rose-encre); } .tuile.M { background: var(--bleu); color: var(--bleu-encre); }
-.tuile.F .lib, .tuile.M .lib { color: inherit; }
-.tuile.large { grid-column: 1 / -1; }
-.rep-ligne { display: flex; justify-content: space-between; font-size: 15px; padding: 3px 0; }
-.rep-ligne strong { font-weight: 700; }
+.st-grille { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.st-bloc { background: var(--blanc); border: 1.5px solid var(--trait-doux); border-radius: 22px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.st-large { grid-column: 1 / -1; }
+.st-tete { display: flex; flex-direction: column; gap: 8px; }
+.st-tete h3 { margin: 0; font-size: 17px; font-weight: 700; }
+.st-outils { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.st-seg { display: inline-flex; gap: 3px; background: var(--voile); border-radius: 20px; padding: 3px; }
+.st-seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 17px; background: transparent; font-size: 13.5px; font-weight: 500; }
+.st-seg button[aria-pressed="true"] { background: var(--encre); color: #fff; }
+.st-nav { display: flex; align-items: center; }
+.st-nav .btn-fleche { width: 40px; height: 40px; }
+.st-nav .btn-fleche svg { width: 18px; height: 18px; }
+.st-nav .btn-fleche:disabled { opacity: 0.25; cursor: default; }
+.st-periode { min-width: 112px; text-align: center; font-size: 14.5px; font-weight: 700; }
+.st-corps { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.st-vide { color: var(--gris); font-size: 14px; text-align: center; padding: 16px 0; }
+.st-lib { font-size: 13.5px; color: var(--gris); }
+.st-detail { min-height: 42px; background: var(--case); border-radius: 12px; padding: 8px 12px; font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; }
+.st-detail strong { font-weight: 700; }
+.st-voir { margin-left: auto; min-height: 36px; font-size: 13px; }
+.st-sexe { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-sexe button { height: 34px; padding: 0 12px 0 9px; border-radius: 17px; border: 1.5px solid var(--trait); background: var(--blanc); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.st-sexe button i { width: 12px; height: 12px; border-radius: 4px; background: var(--mode-vb); }
+.st-sexe .st-sexe-F i { background: var(--rose-vif); } .st-sexe .st-sexe-M i { background: var(--bleu-vif); }
+.st-sexe button[aria-pressed="true"] { background: var(--encre); border-color: var(--encre); color: #fff; }
+.st-tuiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.st-total { grid-column: 1 / -1; }
+.st-tuile { background: var(--case); border-radius: 16px; padding: 12px 14px; min-width: 0; }
+.st-val { font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.st-val small { font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--gris); }
+.st-tuile.F { background: var(--rose); } .st-tuile.F .st-val, .st-tuile.F small, .st-tuile.F .st-lib { color: var(--rose-encre); }
+.st-tuile.M { background: var(--bleu); } .st-tuile.M .st-val, .st-tuile.M small, .st-tuile.M .st-lib { color: var(--bleu-encre); }
+.st-repart { display: flex; flex-direction: column; gap: 8px; }
+.st-barre-seg { display: flex; gap: 2px; height: 12px; }
+.st-barre-seg i { border-radius: 4px; min-width: 3px; }
+.st-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 24px; font-size: 14px; }
+.st-modes p { display: flex; align-items: center; gap: 7px; }
+.st-modes i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.st-modes b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.st-modes em { width: 42px; font-style: normal; text-align: right; color: var(--gris); font-variant-numeric: tabular-nums; }
 
 /* ---------- Fenêtres ---------- */
 .dlg { border: 0; padding: 0; margin: 0; width: 100%; max-width: none; height: 100%; max-height: none; background: var(--fond); color: var(--encre); overflow-y: auto; }
@@ -296,8 +330,9 @@ legend, .champ label { display: block; padding: 0; font-size: 13px; color: var(-
   .champ-texte { max-width: 520px; }
   .resultats { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-content: start; }
 
-  .stats { max-width: 720px; }
-  .tuiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .st-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-tuiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .st-total { grid-column: auto; }
 
   .dlg { width: 460px; height: auto; max-height: calc(100% - 48px); margin: auto; border-radius: 28px; }
   .dlg > form, .dlg:not(:has(> form)) { padding: 24px; }

@@ -375,34 +375,168 @@
   });
   $('btn-effacer-filtres').addEventListener('click', function () { formRech.reset(); rendreNaissances(); });
 
-  /* ---------- Rendu : stats (premier jet, à enrichir) ---------- */
-  function tuile(val, lib, classe) {
-    return el('div', { class: 'tuile' + (classe ? ' ' + classe : '') }, [el('p', { class: 'val', text: val }), el('p', { class: 'lib', text: lib })]);
-  }
+  /* ---------- Stats : cadre commun ---------- */
+  /* Chaque bloc a son propre sélecteur de période (portée Mois / Année / Tout + flèches).
+     La période choisie est gardée tant que l'appli reste ouverte, puis revient à l'année en cours. */
+  var NOMS_PORTEE = { mois: 'Mois', annee: 'Année', tout: 'Tout' };
+  var MODES_STATS = [
+    ['voie-basse', 'Voie basse', 'var(--mode-vb)'], ['instrumentale', 'Instrumentale', 'var(--mode-instr)'],
+    ['cesarienne', 'Césarienne', 'var(--mode-ces)'], ['', 'Non renseigné', 'var(--trait)']
+  ];
+  var etatStats = {};
+  function pct(n, t) { return t ? Math.round(n / t * 100) + ' %' : '—'; }
+  function fg(liste) { var f = 0; liste.forEach(function (b) { if (b.sexe === 'F') f++; }); return { f: f, g: liste.length - f }; }
+  function texteFG(liste) { var s = fg(liste); return [s.f ? pluriel(s.f, 'fille') : '', s.g ? pluriel(s.g, 'garçon') : ''].filter(Boolean).join(', '); }
   function moyenne(liste, champ) {
     var vals = liste.map(function (b) { return b[champ]; }).filter(function (v) { return v != null; });
     return vals.length ? vals.reduce(function (s, v) { return s + v; }, 0) / vals.length : null;
   }
-  function rendreStats() {
-    var zone = $('stats'), tous = donnees.bebes;
-    vider(zone);
-    if (!tous.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les stats apparaîtront dès le premier bébé ajouté.' })); return; }
-    var nF = tous.filter(function (b) { return b.sexe === 'F'; }).length;
-    var pm = moyenne(tous, 'poids'), tm = moyenne(tous, 'taille');
-    var modes = el('div', { class: 'tuile large' }, [el('p', { class: 'lib', text: 'Mode d’accouchement' })]);
-    Object.keys(MODES).forEach(function (k) {
-      var n = tous.filter(function (b) { return b.mode === k; }).length;
-      modes.appendChild(el('p', { class: 'rep-ligne' }, [el('span', { text: maj(MODES[k]) }), el('strong', { text: n })]));
+  function dateLongue(s) { var d = lire(s); return quantieme(d.getDate()) + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear(); }
+  function dateCourte(s) { var d = lire(s); return quantieme(d.getDate()) + ' ' + MOIS_C[d.getMonth()] + ' ' + d.getFullYear(); }
+  function premiereDate() { return donnees.bebes.reduce(function (m, b) { return !m || b.date < m ? b.date : m; }, ''); }
+
+  function periodeDe(id, defaut) {
+    if (!etatStats[id]) { var auj = new Date(); etatStats[id] = { portee: defaut, a: auj.getFullYear(), m: auj.getMonth(), sexe: 'tous' }; }
+    return etatStats[id];
+  }
+  function dansPeriode(b, per) {
+    if (per.portee === 'tout') return true;
+    var prefixe = per.portee === 'annee' ? per.a + '-' : per.a + '-' + pad(per.m + 1) + '-';
+    return b.date.indexOf(prefixe) === 0;
+  }
+  function libellePeriode(per) {
+    if (per.portee === 'tout') return 'Depuis le ' + dateCourte(premiereDate());
+    if (per.portee === 'annee') return String(per.a);
+    return maj(MOIS[per.m]) + ' ' + per.a;
+  }
+  /* Bornes de navigation : du mois du premier bébé jusqu'au mois en cours. */
+  function rang(per) { return per.portee === 'annee' ? per.a : per.a * 12 + per.m; }
+  function rangLimite(per, date) { var d = lire(date); return per.portee === 'annee' ? d.getFullYear() : d.getFullYear() * 12 + d.getMonth(); }
+  function deplacerPeriode(per, sens) {
+    if (per.portee === 'annee') { per.a += sens; return; }
+    var r = per.a * 12 + per.m + sens; per.a = Math.floor(r / 12); per.m = r % 12;
+  }
+  /* Bornes de dates d'une période, pour ouvrir l'onglet Naissances filtré. */
+  function bornesPeriode(per) {
+    if (per.portee === 'tout') return { du: '', au: '' };
+    if (per.portee === 'annee') return { du: per.a + '-01-01', au: per.a + '-12-31' };
+    return { du: iso(new Date(per.a, per.m, 1)), au: iso(new Date(per.a, per.m + 1, 0)) };
+  }
+
+  /* Choix Tous / Filles / Garçons (carte de l'année, nuage, records). */
+  function choixSexe(per, libelle, redessiner) {
+    var groupe = el('div', { class: 'st-sexe', role: 'group', 'aria-label': libelle });
+    [['tous', 'Tous'], ['F', 'Filles'], ['M', 'Garçons']].forEach(function (c) {
+      groupe.appendChild(el('button', {
+        type: 'button', class: 'st-sexe-' + c[0], 'aria-pressed': per.sexe === c[0] ? 'true' : 'false',
+        onclick: function () {
+          per.sexe = c[0];
+          [].forEach.call(groupe.children, function (b, i) { b.setAttribute('aria-pressed', i === ['tous', 'F', 'M'].indexOf(c[0]) ? 'true' : 'false'); });
+          redessiner();
+        }
+      }, [el('i', { 'aria-hidden': 'true' }), document.createTextNode(c[1])]));
     });
-    var sans = tous.filter(function (b) { return !b.mode; }).length;
-    if (sans) modes.appendChild(el('p', { class: 'rep-ligne' }, [el('span', { text: 'Non renseigné' }), el('strong', { text: sans })]));
-    zone.appendChild(el('div', { class: 'tuiles' }, [
-      tuile(nF, nF > 1 ? 'filles' : 'fille', 'F'),
-      tuile(tous.length - nF, tous.length - nF > 1 ? 'garçons' : 'garçon', 'M'),
-      tuile(pm ? textePoids(pm) : '—', 'poids moyen'),
-      tuile(tm ? texteTaille(Math.round(tm * 10) / 10) : '—', 'taille moyenne'),
-      modes
-    ]));
+    return groupe;
+  }
+  function selonSexe(liste, per) { return per.sexe === 'tous' ? liste : liste.filter(function (b) { return b.sexe === per.sexe; }); }
+
+  /* Un bloc : titre, sélecteur de période, contenu dessiné par dessiner(liste, per, corps). */
+  function blocStats(id, titre, portees, defaut, dessiner, options) {
+    options = options || {};
+    var per = periodeDe(id, defaut);
+    if (portees.indexOf(per.portee) < 0) per.portee = defaut;
+    var bloc = el('section', { class: 'st-bloc' + (options.large ? ' st-large' : ''), 'aria-label': titre });
+    var corps = el('div', { class: 'st-corps' });
+    var seg = el('div', { class: 'st-seg', role: 'group', 'aria-label': 'Période de « ' + titre + ' »' });
+    var prec = el('button', { type: 'button', class: 'btn-fleche', 'aria-label': 'Période précédente', onclick: function () { deplacerPeriode(per, -1); redessiner(); } });
+    var suiv = el('button', { type: 'button', class: 'btn-fleche', 'aria-label': 'Période suivante', onclick: function () { deplacerPeriode(per, 1); redessiner(); } });
+    prec.appendChild(icone('M15 18l-6-6 6-6')); suiv.appendChild(icone('M9 18l6-6-6-6'));
+    var lib = el('span', { class: 'st-periode' });
+    portees.forEach(function (p) {
+      seg.appendChild(el('button', { type: 'button', 'data-p': p, text: NOMS_PORTEE[p], onclick: function () { per.portee = p; redessiner(); } }));
+    });
+    var outils = el('div', { class: 'st-outils' }, [portees.length > 1 ? seg : null, el('div', { class: 'st-nav' }, [prec, lib, suiv])]);
+    bloc.appendChild(el('div', { class: 'st-tete' }, [el('h3', { text: titre }), outils, options.sexe ? choixSexe(per, options.sexe, redessiner) : null]));
+    bloc.appendChild(corps);
+    function redessiner() {
+      [].forEach.call(seg.children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-p') === per.portee ? 'true' : 'false'); });
+      var tout = per.portee === 'tout';
+      prec.hidden = suiv.hidden = tout;
+      var premier = premiereDate(), auj = iso(new Date());
+      prec.disabled = !premier || rang(per) <= rangLimite(per, premier);
+      suiv.disabled = rang(per) >= rangLimite(per, auj);
+      lib.textContent = libellePeriode(per);
+      vider(corps);
+      dessiner(donnees.bebes.filter(function (b) { return dansPeriode(b, per); }), per, corps);
+    }
+    redessiner();
+    return bloc;
+  }
+  function icone(d) {
+    var ns = 'http://www.w3.org/2000/svg', s = document.createElementNS(ns, 'svg'), p = document.createElementNS(ns, 'path');
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); p.setAttribute('d', d); s.appendChild(p);
+    return s;
+  }
+  function stVide(corps, liste, texte) {
+    if (liste.length) return false;
+    corps.appendChild(el('p', { class: 'st-vide', text: texte || 'Aucune naissance sur cette période.' }));
+    return true;
+  }
+  /* Bande de détail sous un graphique, remplie au toucher (ou au survol sur ordinateur). */
+  function bandeDetail(corps) { var d = el('div', { class: 'st-detail', 'aria-live': 'polite' }); corps.appendChild(d); return d; }
+  function remplirDetail(d, titre, texte, filtres) {
+    vider(d);
+    d.appendChild(el('strong', { text: titre }));
+    d.appendChild(el('span', { text: texte }));
+    if (filtres) d.appendChild(el('button', { type: 'button', class: 'btn-lien st-voir', text: 'Voir ces naissances', onclick: function () { voirNaissances(filtres); } }));
+  }
+  function choisir(conteneur, noeud) {
+    conteneur.querySelectorAll('.st-choisi').forEach(function (n) { n.classList.remove('st-choisi'); });
+    if (noeud) noeud.classList.add('st-choisi');
+  }
+  /* Ouvre l'onglet Naissances avec des filtres déjà remplis. */
+  function voirNaissances(f) {
+    formRech.reset();
+    ['texte', 'du', 'au', 'sexe', 'mode'].forEach(function (k) { if (f[k]) formRech[k].value = f[k]; });
+    etat.vue = 'naissances';
+    rendre();
+    $('vue-naissances').scrollTop = 0;
+  }
+
+  /* ---------- Stats : chiffres clés ---------- */
+  function blocChiffresCles() {
+    return blocStats('cles', 'Chiffres clés', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+      if (stVide(corps, liste)) return;
+      var t = liste.length, s = fg(liste), pm = moyenne(liste, 'poids'), tm = moyenne(liste, 'taille');
+      function tuile(classe, val, complement, lib) {
+        return el('div', { class: 'st-tuile' + (classe ? ' ' + classe : '') }, [
+          el('p', { class: 'st-val' }, [document.createTextNode(val), complement ? el('small', { text: ' · ' + complement }) : null]),
+          el('p', { class: 'st-lib', text: lib })
+        ]);
+      }
+      corps.appendChild(el('div', { class: 'st-tuiles' }, [
+        tuile('st-total', String(t), null, t > 1 ? 'bébés' : 'bébé'),
+        tuile('F', String(s.f), pct(s.f, t), s.f > 1 ? 'filles' : 'fille'),
+        tuile('M', String(s.g), pct(s.g, t), s.g > 1 ? 'garçons' : 'garçon'),
+        tuile('', pm ? textePoids(pm) : '—', null, 'poids moyen'),
+        tuile('', tm ? texteTaille(Math.round(tm * 10) / 10) : '—', null, 'taille moyenne')
+      ]));
+      var barre = el('div', { class: 'st-barre-seg', 'aria-hidden': 'true' }), lignes = el('div', { class: 'st-modes' });
+      MODES_STATS.forEach(function (md) {
+        var n = liste.filter(function (b) { return b.mode === md[0]; }).length;
+        if (!n && !md[0]) return;
+        if (n) barre.appendChild(el('i', { style: 'flex:' + n + ';background:' + md[2] }));
+        lignes.appendChild(el('p', {}, [el('i', { style: 'background:' + md[2] }), el('span', { text: md[1] }), el('b', { text: n }), el('em', { text: pct(n, t) })]));
+      });
+      corps.appendChild(el('div', { class: 'st-repart' }, [el('p', { class: 'st-lib', text: 'Mode d’accouchement' }), barre, lignes]));
+    }, { large: true });
+  }
+
+  function rendreStats() {
+    var zone = $('stats');
+    vider(zone);
+    if (!donnees.bebes.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les stats apparaîtront dès le premier bébé ajouté.' })); return; }
+    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles()]));
   }
 
   function rendreRappel() {
