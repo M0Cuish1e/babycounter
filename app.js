@@ -141,6 +141,7 @@
     $('vue-accueil').hidden = etat.vue !== 'accueil';
     $('vue-naissances').hidden = etat.vue !== 'naissances';
     $('vue-stats').hidden = etat.vue !== 'stats';
+    $('vue-records').hidden = etat.vue !== 'records';
   }
 
   /* ---------- Rendu : calendrier ---------- */
@@ -456,7 +457,7 @@
       seg.appendChild(el('button', { type: 'button', 'data-p': p, text: NOMS_PORTEE[p], onclick: function () { per.portee = p; redessiner(); } }));
     });
     var outils = el('div', { class: 'st-outils' }, [portees.length > 1 ? seg : null, el('div', { class: 'st-nav' }, [prec, lib, suiv])]);
-    bloc.appendChild(el('div', { class: 'st-tete' }, [el('h3', { text: titre }), outils, options.sexe ? choixSexe(per, options.sexe, redessiner) : null]));
+    bloc.appendChild(el('div', { class: 'st-tete' }, [el('h3', { class: options.titreMasque ? 'masque' : null, text: titre }), outils, options.sexe ? choixSexe(per, options.sexe, redessiner) : null]));
     bloc.appendChild(corps);
     function redessiner() {
       [].forEach.call(seg.children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-p') === per.portee ? 'true' : 'false'); });
@@ -752,6 +753,70 @@
     }, { large: true, sexe: 'Prénoms donnés à' });
   }
 
+  /* ---------- Records (onglet à part) ---------- */
+  /* Bracelet d'information (journée, prénom) : même forme que les bracelets de bébé. */
+  function braceletInfo(classe, titre, sous, mesure, label, action) {
+    return el('button', { type: 'button', class: 'bracelet ' + classe, 'aria-label': label, onclick: action }, [
+      el('span', { class: 'fermoir', 'aria-hidden': 'true' }, [el('i'), el('i')]),
+      el('span', { class: 'bracelet-texte' }, [el('span', { class: 'bracelet-prenom', text: titre }), el('span', { class: 'bracelet-quand', text: sous })]),
+      el('span', { class: 'bracelet-mesures st-record-val', text: mesure })
+    ]);
+  }
+  function exaequo(n, mot) { return n ? 'Ex æquo avec ' + n + ' autre' + (n > 1 ? 's ' : ' ') + mot + (n > 1 ? 's' : '') : null; }
+  function blocRecords() {
+    return blocStats('records', 'Records', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+      liste = selonSexe(liste, per);
+      if (stVide(corps, liste)) return;
+      var fem = per.sexe === 'F', grille = el('div', { class: 'st-records' });
+      function record(quoi, contenu, aussi) {
+        grille.appendChild(el('div', { class: 'st-record' }, [el('p', { class: 'st-record-quoi', text: quoi }), contenu, aussi ? el('p', { class: 'st-record-aussi', text: aussi }) : null]));
+      }
+      /* Journée la plus chargée : toucher ouvre ce jour à l'accueil. */
+      var parJourLoc = {};
+      liste.forEach(function (b) { (parJourLoc[b.date] = parJourLoc[b.date] || []).push(b); });
+      var jours = Object.keys(parJourLoc).sort();
+      var jr = jours.reduce(function (m, k) { return !m || parJourLoc[k].length > parJourLoc[m].length ? k : m; }, null);
+      var nJ = parJourLoc[jr].length;
+      record('Journée la plus chargée', braceletInfo('neutre', dateLongue(jr), texteFG(parJourLoc[jr]), pluriel(nJ, 'bébé'),
+        'Journée la plus chargée : ' + dateLongue(jr) + ', ' + pluriel(nJ, 'bébé'),
+        function () { etat.vue = 'accueil'; etat.periode = 'mois'; etat.ancre = lire(jr); etat.jour = jr; rendre(); }),
+        exaequo(jours.filter(function (k) { return parJourLoc[k].length === nJ; }).length - 1, 'jour'));
+      /* Mesures extrêmes : le bracelet du bébé, qui ouvre sa fiche. */
+      function extreme(champ, sens) {
+        var v = liste.filter(function (b) { return b[champ] != null; });
+        if (!v.length) return null;
+        var m = v.reduce(function (a, b) { return sens * (b[champ] - a[champ]) > 0 ? b : a; });
+        return { b: m, autres: v.filter(function (b) { return b[champ] === m[champ]; }).length - 1 };
+      }
+      [['poids', 1, fem ? 'La plus lourde' : 'Le plus lourd'], ['poids', -1, fem ? 'La plus légère' : 'Le plus léger'],
+       ['taille', 1, fem ? 'La plus grande' : 'Le plus grand'], ['taille', -1, fem ? 'La plus petite' : 'Le plus petit']].forEach(function (x) {
+        var e = extreme(x[0], x[1]);
+        if (e) record(x[2], bracelet(e.b), exaequo(e.autres, 'bébé'));
+      });
+      /* Prénom le plus donné : toucher lance la recherche de ce prénom. */
+      var noms = {};
+      liste.forEach(function (b) { if (b.prenom) (noms[b.prenom] = noms[b.prenom] || []).push(b); });
+      var cles = Object.keys(noms).sort();
+      if (cles.length) {
+        var top = cles.reduce(function (m, k) { return !m || noms[k].length > noms[m].length ? k : m; }, null), nT = noms[top].length;
+        var autres = cles.filter(function (k) { return k !== top && noms[k].length === nT; });
+        var s = fg(noms[top]), bo = bornesPeriode(per);
+        record('Prénom le plus donné', braceletInfo(s.f >= s.g ? 'F' : 'M', top, 'dernier le ' + dateCourte(noms[top].map(function (b) { return b.date; }).sort().pop()), nT + ' fois',
+          'Prénom le plus donné : ' + top + ', ' + nT + ' fois',
+          function () { voirNaissances({ texte: top, du: bo.du, au: bo.au, sexe: per.sexe === 'tous' ? '' : per.sexe }); }),
+          autres.length ? 'Ex æquo avec ' + autres.slice(0, 3).join(', ') + (autres.length > 3 ? ' et ' + (autres.length - 3) + ' autres' : '') : null);
+      }
+      corps.appendChild(grille);
+      ajusterPrenoms(grille);
+    }, { large: true, sexe: 'Records parmi', titreMasque: true });
+  }
+  function rendreRecords() {
+    var zone = $('records');
+    vider(zone);
+    if (!donnees.bebes.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les records apparaîtront dès le premier bébé ajouté.' })); return; }
+    zone.appendChild(el('div', { class: 'st-grille' }, [blocRecords()]));
+  }
+
   function rendreStats() {
     var zone = $('stats');
     vider(zone);
@@ -779,6 +844,7 @@
     rendreRappel();
     if (etat.vue === 'accueil') rendreAccueil();
     else if (etat.vue === 'naissances') rendreNaissances();
+    else if (etat.vue === 'records') rendreRecords();
     else rendreStats();
   }
 
@@ -851,8 +917,8 @@
     if (ancien) donnees.bebes = donnees.bebes.map(function (b) { return b.id === ficheId ? fiche : b; });
     else donnees.bebes.push(fiche);
     if (!enregistrer()) { donnees.bebes = avant; return; }
-    /* Depuis la vue Naissances, on y reste avec la recherche en cours ; sinon retour à l'accueil sur la date du bébé. */
-    if (etat.vue !== 'naissances') {
+    /* Depuis Naissances ou Records, on y reste ; sinon retour à l'accueil sur la date du bébé. */
+    if (etat.vue !== 'naissances' && etat.vue !== 'records') {
       etat.ancre = lire(date);
       etat.jour = null;
       etat.vue = 'accueil';
@@ -995,8 +1061,6 @@
     if (cible.hasAttribute('data-vue')) {
       etat.vue = cible.getAttribute('data-vue');
       rendre();
-      /* La loupe du téléphone sert à chercher : le champ prend le focus et le clavier s'ouvre. */
-      if (etat.vue === 'naissances' && cible.classList.contains('btn-rond')) $('r-texte').focus();
       return;
     }
     if (cible.hasAttribute('data-periode')) {
