@@ -674,11 +674,89 @@
     });
   }
 
+  /* ---------- Stats : carte de l'année (12 lignes de mois × 31 jours) ---------- */
+  var RAMPES = {
+    tous: ['var(--case)', '#C9CBE3', '#9296C4', '#5D61A3', '#23254A'],
+    F: ['var(--case)', '#F9C9D8', '#F09AB6', '#DB6189', '#A92D58'],
+    M: ['var(--case)', '#C3DDF5', '#8DBDEB', '#4E8FD1', '#1F5A99']
+  };
+  function blocCarteAnnee() {
+    return blocStats('carte', 'Carte de l’année', ['annee'], 'annee', function (liste, per, corps) {
+      liste = selonSexe(liste, per);
+      var rampe = RAMPES[per.sexe], index = {}, detail;
+      liste.forEach(function (b) { (index[b.date] = index[b.date] || []).push(b); });
+      var grille = el('div', { class: 'st-calan' });
+      grille.appendChild(el('span'));
+      for (var j = 1; j <= 31; j++) grille.appendChild(el('span', { class: 'st-calan-j', 'aria-hidden': 'true', text: j === 1 || j % 5 === 0 ? j : '' }));
+      MOIS_C.forEach(function (nom, m) {
+        grille.appendChild(el('span', { class: 'st-calan-m', text: nom }));
+        var nb = new Date(per.a, m + 1, 0).getDate();
+        for (var j = 1; j <= 31; j++) {
+          if (j > nb) { grille.appendChild(el('span')); continue; }
+          (function (cle) {
+            var n = (index[cle] || []).length;
+            var c = el('button', { type: 'button', class: 'st-case', style: 'background:' + rampe[Math.min(n, 4)], 'aria-label': dateLongue(cle) + ' : ' + pluriel(n, 'naissance') });
+            function voir() { choisir(grille, c); montrer(cle); }
+            c.addEventListener('click', voir);
+            c.addEventListener('mouseenter', voir);
+            grille.appendChild(c);
+          })(iso(new Date(per.a, m, j)));
+        }
+      });
+      corps.appendChild(grille);
+      var echelle = el('div', { class: 'st-echelle', 'aria-hidden': 'true' }, [document.createTextNode('0')]);
+      rampe.forEach(function (c) { echelle.appendChild(el('i', { style: 'background:' + c })); });
+      echelle.appendChild(document.createTextNode('4 et plus'));
+      corps.appendChild(echelle);
+      detail = bandeDetail(corps);
+      var qui = { tous: 'naissance', F: 'fille', M: 'garçon' }[per.sexe];
+      function montrer(cle) {
+        var l = index[cle] || [];
+        remplirDetail(detail, dateLongue(cle), per.sexe === 'tous' ? pluriel(l.length, 'naissance') + (l.length ? ' · ' + texteFG(l) : '') : pluriel(l.length, qui),
+          l.length ? { du: cle, au: cle, sexe: per.sexe === 'tous' ? '' : per.sexe } : null);
+      }
+      var jours = Object.keys(index).length;
+      remplirDetail(detail, String(per.a), pluriel(jours, 'jour') + ' avec au moins une ' + qui + ' · ' + pluriel(liste.length, per.sexe === 'tous' ? 'bébé' : qui), null);
+    }, { large: true, sexe: 'Couleur de la carte' });
+  }
+
+  /* ---------- Stats : nuage des prénoms ---------- */
+  function hachage(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+  function blocNuage() {
+    return blocStats('nuage', 'Nuage des prénoms', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+      liste = selonSexe(liste, per);
+      var noms = {};
+      liste.forEach(function (b) { if (b.prenom) (noms[b.prenom] = noms[b.prenom] || []).push(b); });
+      var cles = Object.keys(noms);
+      if (stVide(corps, cles, 'Aucun prénom sur cette période.')) return;
+      var max = Math.max.apply(null, cles.map(function (k) { return noms[k].length; }));
+      var nuage = el('div', { class: 'st-nuage' }), detail;
+      /* Ordre mélangé mais stable, pour que les grands prénoms ne soient pas tous au début. */
+      cles.sort(function (a, b) { return hachage(a) - hachage(b); }).forEach(function (k) {
+        var n = noms[k].length, s = fg(noms[k]), taille = 18 + (max > 1 ? (n - 1) / (max - 1) : 0) * 32;
+        var b = el('button', { type: 'button', class: s.f >= s.g ? 'F' : 'M', style: 'font-size:' + taille.toFixed(1) + 'px', text: k, 'aria-label': k + ', ' + n + ' fois' });
+        function voir() { choisir(nuage, b); montrer(k); }
+        b.addEventListener('click', voir);
+        b.addEventListener('mouseenter', voir);
+        nuage.appendChild(b);
+      });
+      corps.appendChild(nuage);
+      corps.appendChild(el('p', { class: 'st-lib', text: 'Taille selon le nombre de fois où le prénom a été donné · ' + pluriel(cles.length, 'prénom') + ' différent' + (cles.length > 1 ? 's' : '') + '.' }));
+      detail = bandeDetail(corps);
+      function montrer(k) {
+        var l = noms[k], s = fg(l), bo = bornesPeriode(per);
+        remplirDetail(detail, k, 'donné ' + l.length + ' fois' + (s.f && s.g ? ' (' + texteFG(l) + ')' : ''),
+          { texte: k, du: bo.du, au: bo.au, sexe: per.sexe === 'tous' ? '' : per.sexe });
+      }
+      montrer(cles.slice().sort(function (a, b) { return noms[b].length - noms[a].length || (a < b ? -1 : 1); })[0]);
+    }, { large: true, sexe: 'Prénoms donnés à' });
+  }
+
   function rendreStats() {
     var zone = $('stats');
     vider(zone);
     if (!donnees.bebes.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les stats apparaîtront dès le premier bébé ajouté.' })); return; }
-    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine(), blocHorloge(), blocModes()]));
+    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine(), blocHorloge(), blocModes(), blocCarteAnnee(), blocNuage()]));
   }
 
   function rendreRappel() {
