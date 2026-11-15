@@ -34,7 +34,9 @@
   --bleu: #CDE5FA; --bleu-bord: #8DBEEA; --bleu-encre: #143A63; --bleu-vif: #5FA3E0;
   --danger: #A8243F;
   /* Modes d'accouchement dans les stats (le rose et le bleu restent réservés aux filles et garçons) */
-  --mode-vb: #6A6FC4; --mode-instr: #D9963A; --mode-ces: #2FA38A;
+  --mode-naturel: #6A6FC4; --mode-instru: #D9963A;
+  --peri-avec: #2FA38A; --peri-sans: #A6DBCD;
+  --travail-declenche: #8C6BB1; --travail-spontane: #D3C6E6;
   --heure: #6E72A0;
   --main: 'Caveat', 'Segoe Script', cursive;
 }
@@ -207,11 +209,10 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .st-voir { margin-left: auto; min-height: 36px; font-size: 13px; }
 .st-sexe { display: flex; flex-wrap: wrap; gap: 6px; }
 .st-sexe button { height: 34px; padding: 0 12px 0 9px; border-radius: 17px; border: 1.5px solid var(--trait); background: var(--blanc); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
-.st-sexe button i { width: 12px; height: 12px; border-radius: 4px; background: var(--mode-vb); }
+.st-sexe button i { width: 12px; height: 12px; border-radius: 4px; background: var(--heure); }
 .st-sexe .st-sexe-F i { background: var(--rose-vif); } .st-sexe .st-sexe-M i { background: var(--bleu-vif); }
 .st-sexe button[aria-pressed="true"] { background: var(--encre); border-color: var(--encre); color: #fff; }
 .st-tuiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.st-total { grid-column: 1 / -1; }
 .st-tuile { background: var(--case); border-radius: 16px; padding: 12px 14px; min-width: 0; }
 .st-val { font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .st-val small { font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--gris); }
@@ -293,7 +294,7 @@ legend, .champ label { display: block; padding: 0; font-size: 13px; color: var(-
 .choix input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
 .choix span { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border-radius: 24px; border: 1.5px solid var(--trait); background: var(--blanc); font-weight: 500; }
 .choix input:focus-visible + span { outline: 2.5px solid var(--encre); outline-offset: 2px; }
-.choix-sexe label { flex: 1; }
+.choix-sexe label, .choix-2 label { flex: 1; }
 .choix-F span { border-color: var(--rose-bord); color: var(--rose-encre); }
 .choix-M span { border-color: var(--bleu-bord); color: var(--bleu-encre); }
 .choix-F input:checked + span { background: var(--rose); border-color: #B8436A; border-width: 2px; }
@@ -372,15 +373,14 @@ legend, .champ label { display: block; padding: 0; font-size: 13px; color: var(-
   .moisc .total { font-size: 40px; letter-spacing: -0.02em; }
   .moisc .barre-fg { height: 8px; gap: 3px; }
 
-  .filtres, .filtres.ouvert { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .filtres, .filtres.ouvert { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .btn-filtres { display: none; }
   .recherche.filtres-ouverts { position: sticky; }
   .champ-texte { max-width: 520px; }
   .resultats { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-content: start; }
 
   .st-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .st-tuiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .st-total { grid-column: auto; }
+  .st-tuiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .st-records { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
 
   .dlg { width: 460px; height: auto; max-height: calc(100% - 48px); margin: auto; border-radius: 28px; }

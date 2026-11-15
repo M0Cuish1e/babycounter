@@ -123,9 +123,26 @@
               <label for="r-mode">Mode d'accouchement</label>
               <select id="r-mode" name="mode">
                 <option value="">Tous</option>
-                <option value="voie-basse">Voie basse</option>
-                <option value="instrumentale">Instrumentale</option>
-                <option value="cesarienne">Césarienne</option>
+                <option value="naturel">Naturel</option>
+                <option value="instrumente">Instrumenté</option>
+                <option value="aucun">Non renseigné</option>
+              </select>
+            </div>
+            <div class="champ">
+              <label for="r-peridurale">Péridurale</label>
+              <select id="r-peridurale" name="peridurale">
+                <option value="">Toutes</option>
+                <option value="avec">Avec péri</option>
+                <option value="sans">Sans péri</option>
+                <option value="aucun">Non renseigné</option>
+              </select>
+            </div>
+            <div class="champ">
+              <label for="r-travail">Début du travail</label>
+              <select id="r-travail" name="travail">
+                <option value="">Tous</option>
+                <option value="spontane">Spontané</option>
+                <option value="declenche">Déclenché</option>
                 <option value="aucun">Non renseigné</option>
               </select>
             </div>
@@ -222,18 +239,30 @@
         <label for="f-poids">Poids (g)</label>
         <input id="f-poids" name="poids" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="3420">
       </div>
-      <div class="champ">
-        <label for="f-taille">Taille (cm)</label>
-        <input id="f-taille" name="taille" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="50,5">
-      </div>
     </div>
+
+    <!-- Choix facultatifs : un seul à la fois, et un second appui le décoche (non renseigné). -->
+    <fieldset>
+      <legend>Début du travail</legend>
+      <div class="choix choix-mode choix-2">
+        <label><input type="checkbox" name="travail" value="spontane"><span>Spontané</span></label>
+        <label><input type="checkbox" name="travail" value="declenche"><span>Déclenché</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Péridurale</legend>
+      <div class="choix choix-mode choix-2">
+        <label><input type="checkbox" name="peridurale" value="avec"><span>Avec péri</span></label>
+        <label><input type="checkbox" name="peridurale" value="sans"><span>Sans péri</span></label>
+      </div>
+    </fieldset>
 
     <fieldset>
       <legend>Mode d'accouchement</legend>
-      <div class="choix choix-mode">
-        <label><input type="checkbox" name="mode" value="voie-basse"><span>Voie basse</span></label>
-        <label><input type="checkbox" name="mode" value="instrumentale"><span>Instrumentale</span></label>
-        <label><input type="checkbox" name="mode" value="cesarienne"><span>Césarienne</span></label>
+      <div class="choix choix-mode choix-2">
+        <label><input type="checkbox" name="mode" value="naturel"><span>Naturel</span></label>
+        <label><input type="checkbox" name="mode" value="instrumente"><span>Instrumenté</span></label>
       </div>
     </fieldset>
 

@@ -9,7 +9,12 @@
   var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   var MOIS_C = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
   var JOURS_C = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
-  var MODES = { 'voie-basse': 'voie basse', 'instrumentale': 'instrumentale', 'cesarienne': 'césarienne' };
+  var MODES = { naturel: 'naturel', instrumente: 'instrumenté' };
+  var PERIDURALE = { avec: 'avec péri', sans: 'sans péri' };
+  var TRAVAIL = { spontane: 'spontané', declenche: 'déclenché' };
+  /* Anciens modes (jusqu'en novembre 2026) : voie basse devient naturel, instrumentale devient instrumenté.
+     La césarienne n'existe plus : le mode passe à « non renseigné » et l'ancienne valeur reste dans modeInitial. */
+  var ANCIENS_MODES = { 'voie-basse': 'naturel', 'instrumentale': 'instrumente' };
 
   /* ---------- État ---------- */
   var donnees = { version: VERSION, bebes: [], dernierExport: null, rappelMasque: null };
@@ -56,8 +61,11 @@
     n.sexe = b.sexe === 'M' ? 'M' : 'F';
     n.heure = /^\d{2}:\d{2}$/.test(b.heure || '') ? b.heure : '';
     n.poids = typeof b.poids === 'number' && b.poids > 0 ? Math.round(b.poids) : null;
-    n.taille = typeof b.taille === 'number' && b.taille > 0 ? b.taille : null;
-    n.mode = MODES[b.mode] ? b.mode : '';
+    /* La taille n'est plus saisie : une ancienne valeur reste dans la fiche comme champ inconnu. */
+    n.mode = MODES[b.mode] ? b.mode : ANCIENS_MODES[b.mode] || '';
+    if (b.mode === 'cesarienne') n.modeInitial = 'cesarienne';
+    n.peridurale = PERIDURALE[b.peridurale] ? b.peridurale : '';
+    n.travail = TRAVAIL[b.travail] ? b.travail : '';
     n.note = String(b.note || '').slice(0, 500);
     n.cree = b.cree || new Date().toISOString();
     n.modifie = b.modifie || n.cree;
@@ -110,10 +118,11 @@
     if (d.getFullYear() !== new Date().getFullYear()) t += ' ' + d.getFullYear();
     if (b.heure) t += ' à ' + b.heure.replace(':', ' h ');
     if (b.mode) t += ', ' + MODES[b.mode];
+    if (b.peridurale) t += ', ' + (b.peridurale === 'avec' ? 'péri' : 'sans péri');
+    if (b.travail) t += ', ' + TRAVAIL[b.travail];
     return t;
   }
   function textePoids(g) { return (g / 1000).toFixed(2).replace('.', ',') + ' kg'; }
-  function texteTaille(cm) { return String(cm).replace('.', ',') + ' cm'; }
   function titrePeriode() {
     var a = etat.ancre, bo = bornes();
     if (etat.periode === 'mois') return maj(MOIS[a.getMonth()]) + ' ' + a.getFullYear();
@@ -263,7 +272,6 @@
   function bracelet(b) {
     var mesures = el('span', { class: 'bracelet-mesures' });
     if (b.poids) mesures.appendChild(document.createTextNode(textePoids(b.poids)));
-    if (b.taille) mesures.appendChild(el('span', { text: texteTaille(b.taille) }));
     return el('button', {
       type: 'button', class: 'bracelet ' + b.sexe,
       'aria-label': 'Modifier ' + (b.prenom || 'ce bébé') + ', ' + texteQuand(b),
@@ -329,6 +337,7 @@
     return {
       mots: sansAccents(formRech.texte.value.trim()).split(/\s+/).filter(Boolean),
       du: formRech.du.value, au: formRech.au.value, sexe: formRech.sexe.value, mode: formRech.mode.value,
+      peridurale: formRech.peridurale.value, travail: formRech.travail.value,
       pmin: pmin == null || isNaN(pmin) ? null : pmin, pmax: pmax == null || isNaN(pmax) ? null : pmax
     };
   }
@@ -336,7 +345,11 @@
     if (c.du && b.date < c.du) return false;
     if (c.au && b.date > c.au) return false;
     if (c.sexe && b.sexe !== c.sexe) return false;
-    if (c.mode === 'aucun' ? b.mode : c.mode && b.mode !== c.mode) return false;
+    /* « aucun » = non renseigné */
+    for (var i = 0; i < CHOIX_FACULTATIFS.length; i++) {
+      var k = CHOIX_FACULTATIFS[i];
+      if (c[k] === 'aucun' ? b[k] : c[k] && b[k] !== c[k]) return false;
+    }
     if (c.pmin != null && !(b.poids >= c.pmin)) return false;
     if (c.pmax != null && !(b.poids <= c.pmax)) return false;
     if (c.mots.length) {
@@ -347,7 +360,7 @@
   }
   function rendreNaissances() {
     var c = criteres(), zone = $('resultats'), total = donnees.bebes.length;
-    var nbFiltres = ['du', 'au', 'sexe', 'mode', 'pmin', 'pmax'].filter(function (k) { return c[k] != null && c[k] !== ''; }).length;
+    var nbFiltres = ['du', 'au', 'sexe', 'mode', 'peridurale', 'travail', 'pmin', 'pmax'].filter(function (k) { return c[k] != null && c[k] !== ''; }).length;
     var filtre = nbFiltres > 0 || c.mots.length > 0;
     var liste = filtre ? tries(donnees.bebes.filter(function (b) { return correspond(b, c); })) : tries(donnees.bebes);
     $('nb-filtres').textContent = nbFiltres;
@@ -381,8 +394,7 @@
      La période choisie est gardée tant que l'appli reste ouverte, puis revient à l'année en cours. */
   var NOMS_PORTEE = { mois: 'Mois', annee: 'Année', tout: 'Tout' };
   var MODES_STATS = [
-    ['voie-basse', 'Voie basse', 'var(--mode-vb)'], ['instrumentale', 'Instrumentale', 'var(--mode-instr)'],
-    ['cesarienne', 'Césarienne', 'var(--mode-ces)'], ['', 'Non renseigné', 'var(--trait)']
+    ['naturel', 'Naturel', 'var(--mode-naturel)'], ['instrumente', 'Instrumenté', 'var(--mode-instru)'], ['', 'Non renseigné', 'var(--trait)']
   ];
   var etatStats = {};
   function pct(n, t) { return t ? Math.round(n / t * 100) + ' %' : '—'; }
@@ -498,7 +510,7 @@
   /* Ouvre l'onglet Naissances avec des filtres déjà remplis. */
   function voirNaissances(f) {
     formRech.reset();
-    ['texte', 'du', 'au', 'sexe', 'mode'].forEach(function (k) { if (f[k]) formRech[k].value = f[k]; });
+    ['texte', 'du', 'au', 'sexe', 'mode', 'peridurale', 'travail'].forEach(function (k) { if (f[k]) formRech[k].value = f[k]; });
     etat.vue = 'naissances';
     rendre();
     $('vue-naissances').scrollTop = 0;
@@ -508,7 +520,7 @@
   function blocChiffresCles() {
     return blocStats('cles', 'Chiffres clés', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
       if (stVide(corps, liste)) return;
-      var t = liste.length, s = fg(liste), pm = moyenne(liste, 'poids'), tm = moyenne(liste, 'taille');
+      var t = liste.length, s = fg(liste), pm = moyenne(liste, 'poids');
       function tuile(classe, val, complement, lib) {
         return el('div', { class: 'st-tuile' + (classe ? ' ' + classe : '') }, [
           el('p', { class: 'st-val' }, [document.createTextNode(val), complement ? el('small', { text: ' · ' + complement }) : null]),
@@ -516,11 +528,10 @@
         ]);
       }
       corps.appendChild(el('div', { class: 'st-tuiles' }, [
-        tuile('st-total', String(t), null, t > 1 ? 'bébés' : 'bébé'),
-        tuile('F', String(s.f), pct(s.f, t), s.f > 1 ? 'filles' : 'fille'),
-        tuile('M', String(s.g), pct(s.g, t), s.g > 1 ? 'garçons' : 'garçon'),
+        tuile('', String(t), null, t > 1 ? 'bébés' : 'bébé'),
         tuile('', pm ? textePoids(pm) : '—', null, 'poids moyen'),
-        tuile('', tm ? texteTaille(Math.round(tm * 10) / 10) : '—', null, 'taille moyenne')
+        tuile('F', String(s.f), pct(s.f, t), s.f > 1 ? 'filles' : 'fille'),
+        tuile('M', String(s.g), pct(s.g, t), s.g > 1 ? 'garçons' : 'garçon')
       ]));
       var barre = el('div', { class: 'st-barre-seg', 'aria-hidden': 'true' }), lignes = el('div', { class: 'st-modes' });
       MODES_STATS.forEach(function (md) {
@@ -788,8 +799,7 @@
         var m = v.reduce(function (a, b) { return sens * (b[champ] - a[champ]) > 0 ? b : a; });
         return { b: m, autres: v.filter(function (b) { return b[champ] === m[champ]; }).length - 1 };
       }
-      [['poids', 1, fem ? 'La plus lourde' : 'Le plus lourd'], ['poids', -1, fem ? 'La plus légère' : 'Le plus léger'],
-       ['taille', 1, fem ? 'La plus grande' : 'Le plus grand'], ['taille', -1, fem ? 'La plus petite' : 'Le plus petit']].forEach(function (x) {
+      [['poids', 1, fem ? 'La plus lourde' : 'Le plus lourd'], ['poids', -1, fem ? 'La plus légère' : 'Le plus léger']].forEach(function (x) {
         var e = extreme(x[0], x[1]);
         if (e) record(x[2], bracelet(e.b), exaequo(e.autres, 'bébé'));
       });
@@ -851,13 +861,14 @@
   /* ---------- Fiche : ajout, modification, suppression ---------- */
   var form = $('form-fiche'), dlgFiche = $('dlg-fiche');
   function valeurSexe() { var c = form.querySelector('input[name="sexe"]:checked'); return c ? c.value : ''; }
-  function valeurMode() { var c = form.querySelector('input[name="mode"]:checked'); return c ? c.value : ''; }
+  function valeurChoix(nom) { var c = form.querySelector('input[name="' + nom + '"]:checked'); return c ? c.value : ''; }
+  var CHOIX_FACULTATIFS = ['mode', 'peridurale', 'travail'];
   function majApercu() {
     var sexe = valeurSexe(), ap = $('apercu');
     ap.className = 'bracelet apercu ' + (sexe || 'neutre');
     $('apercu-prenom').textContent = form.prenom.value.trim() || 'Prénom';
     ajusterPrenoms(ap);
-    $('apercu-quand').textContent = form.date.value ? texteQuand({ date: form.date.value, heure: form.heure.value, mode: valeurMode() }) : '';
+    $('apercu-quand').textContent = form.date.value ? texteQuand({ date: form.date.value, heure: form.heure.value, mode: valeurChoix('mode'), peridurale: valeurChoix('peridurale'), travail: valeurChoix('travail') }) : '';
   }
   function ouvrirFiche(b) {
     ficheId = b ? b.id : null;
@@ -868,12 +879,13 @@
     reinitSuppression();
     if (b) {
       form.querySelectorAll('input[name="sexe"]').forEach(function (r) { r.checked = r.value === b.sexe; });
-      form.querySelectorAll('input[name="mode"]').forEach(function (c) { c.checked = c.value === b.mode; });
+      CHOIX_FACULTATIFS.forEach(function (nom) {
+        form.querySelectorAll('input[name="' + nom + '"]').forEach(function (c) { c.checked = c.value === b[nom]; });
+      });
       form.prenom.value = b.prenom;
       form.date.value = b.date;
       form.heure.value = b.heure;
       form.poids.value = b.poids == null ? '' : b.poids;
-      form.taille.value = b.taille == null ? '' : String(b.taille).replace('.', ',');
       form.note.value = b.note;
     } else {
       form.date.value = etat.jour || iso(new Date());
@@ -891,28 +903,32 @@
 
   form.addEventListener('input', function () { $('fiche-erreur').hidden = true; majApercu(); });
   form.addEventListener('change', function (ev) {
-    /* Le mode est facultatif : un seul choix à la fois, et on peut le décocher. */
-    if (ev.target.name === 'mode' && ev.target.checked) {
-      form.querySelectorAll('input[name="mode"]').forEach(function (c) { if (c !== ev.target) c.checked = false; });
+    /* Mode, péridurale et début du travail sont facultatifs : un seul choix à la fois, et on peut le décocher. */
+    if (CHOIX_FACULTATIFS.indexOf(ev.target.name) >= 0 && ev.target.checked) {
+      form.querySelectorAll('input[name="' + ev.target.name + '"]').forEach(function (c) { if (c !== ev.target) c.checked = false; });
     }
     $('fiche-erreur').hidden = true;
     majApercu();
   });
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
-    var sexe = valeurSexe(), date = form.date.value, poids = nombre(form.poids), taille = nombre(form.taille);
+    var sexe = valeurSexe(), date = form.date.value, poids = nombre(form.poids);
     if (!sexe) return erreurFiche('Choisir fille ou garçon.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return erreurFiche('Indiquer la date de naissance.');
     if (date > iso(new Date())) return erreurFiche('La date de naissance est dans le futur.');
     if (poids != null && (isNaN(poids) || poids < 300 || poids > 7000)) return erreurFiche('Le poids se saisit en grammes, entre 300 et 7000 (par exemple 3420).');
-    if (taille != null && (isNaN(taille) || taille < 20 || taille > 65)) return erreurFiche('La taille se saisit en centimètres, entre 20 et 65 (par exemple 50).');
     var maintenant = new Date().toISOString();
     var ancien = ficheId ? donnees.bebes.filter(function (b) { return b.id === ficheId; })[0] : null;
-    var fiche = normaliser({
+    /* On part de l'ancienne fiche pour garder ses champs inconnus (ancienne taille, champs d'une version future…). */
+    var saisie = {
       id: ficheId || identifiant(), prenom: form.prenom.value, sexe: sexe, date: date, heure: form.heure.value,
-      poids: poids, taille: taille, mode: valeurMode(), note: form.note.value.trim(),
-      cree: ancien ? ancien.cree : maintenant, modifie: maintenant
-    });
+      poids: poids, mode: valeurChoix('mode'), peridurale: valeurChoix('peridurale'), travail: valeurChoix('travail'),
+      note: form.note.value.trim(), cree: ancien ? ancien.cree : maintenant, modifie: maintenant
+    };
+    var base = {};
+    if (ancien) Object.keys(ancien).forEach(function (k) { base[k] = ancien[k]; });
+    Object.keys(saisie).forEach(function (k) { base[k] = saisie[k]; });
+    var fiche = normaliser(base);
     var avant = donnees.bebes.slice();
     if (ancien) donnees.bebes = donnees.bebes.map(function (b) { return b.id === ficheId ? fiche : b; });
     else donnees.bebes.push(fiche);
