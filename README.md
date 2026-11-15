@@ -39,10 +39,13 @@ puis ouvrir http://localhost:8000.
 {
   "id": "…", "prenom": "Inaya", "sexe": "F",
   "date": "2026-11-12", "heure": "03:14",
-  "poids": 3420, "taille": 50,
-  "mode": "voie-basse", "note": "",
+  "poids": 3420,
+  "travail": "spontane", "peridurale": "avec", "mode": "naturel",
+  "note": "",
   "cree": "…", "modifie": "…"
 }
 ```
 
-`poids` en grammes, `taille` en centimètres, `mode` parmi `voie-basse`, `instrumentale`, `cesarienne` ou vide. Les champs inconnus d'un fichier importé sont conservés.
+`poids` en grammes. `travail` parmi `spontane`, `declenche` ; `peridurale` parmi `avec`, `sans` ; `mode` parmi `naturel`, `instrumente`. Chacun peut être vide (non renseigné). Les champs inconnus d'un fichier importé sont conservés.
+
+Anciennes fiches : la taille n'est plus saisie (une valeur déjà enregistrée reste dans la fiche) ; `voie-basse` devient `naturel`, `instrumentale` devient `instrumente`, `cesarienne` devient vide avec `"modeInitial": "cesarienne"`.
