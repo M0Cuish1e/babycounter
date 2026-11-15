@@ -532,11 +532,67 @@
     }, { large: true });
   }
 
+  /* ---------- Stats : histogrammes (colonnes empilées filles / garçons) ---------- */
+  function pasAxe(max) { var c = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500]; for (var i = 0; i < c.length; i++) if (max / c[i] <= 4) return c[i]; return 1000; }
+  /* groupes : listes de bébés, une par colonne ; nom(i) : libellé du détail ; filtres(i) : filtres du lien, ou null. */
+  function histogramme(corps, groupes, etiquettes, nom, filtres) {
+    var HAUT = 150, max = Math.max.apply(null, groupes.map(function (g) { return g.length; })) || 1;
+    var pas = pasAxe(max), sommet = Math.ceil(max / pas) * pas;
+    var axe = el('div', { class: 'st-axe-y', 'aria-hidden': 'true' }), zone = el('div', { class: 'st-zone' }), cols = el('div', { class: 'st-cols' });
+    for (var v = 0; v <= sommet; v += pas) {
+      axe.appendChild(el('span', { style: 'bottom:' + (v / sommet * 100) + '%', text: v }));
+      zone.appendChild(el('i', { class: 'st-ligne-y' + (v ? '' : ' st-base'), style: 'bottom:' + (v / sommet * 100) + '%' }));
+    }
+    var iMax = groupes.reduce(function (im, g, i) { return g.length > groupes[im].length ? i : im; }, 0), detail;
+    groupes.forEach(function (g, i) {
+      var s = fg(g), pile = el('span', { class: 'st-pile' });
+      if (s.f) pile.appendChild(el('i', { class: 'F', style: 'height:' + (s.f / sommet * HAUT) + 'px' }));
+      if (s.g) pile.appendChild(el('i', { class: 'M', style: 'height:' + (s.g / sommet * HAUT) + 'px' }));
+      var col = el('button', { type: 'button', class: 'st-col', 'aria-label': nom(i) + ' : ' + pluriel(g.length, 'naissance') }, [
+        i === iMax && g.length ? el('span', { class: 'st-cap', text: g.length }) : null, pile
+      ]);
+      function voir() { choisir(cols, col); montrer(i); }
+      col.addEventListener('click', voir);
+      col.addEventListener('mouseenter', function () { montrer(i); });
+      cols.appendChild(col);
+    });
+    zone.appendChild(cols);
+    corps.appendChild(el('div', { class: 'st-histo' }, [axe, zone]));
+    corps.appendChild(el('div', { class: 'st-axe-x', 'aria-hidden': 'true' }, etiquettes.map(function (t) { return el('span', { text: t }); })));
+    corps.appendChild(el('div', { class: 'st-legende' }, [el('span', {}, [el('i', { class: 'F' }), document.createTextNode('Filles')]), el('span', {}, [el('i', { class: 'M' }), document.createTextNode('Garçons')])]));
+    detail = bandeDetail(corps);
+    function montrer(i) {
+      var g = groupes[i];
+      remplirDetail(detail, nom(i), pluriel(g.length, 'naissance') + (g.length ? ' · ' + texteFG(g) : ''), g.length && filtres ? filtres(i) : null);
+    }
+    montrer(iMax);
+  }
+  var MOIS_I = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  var JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+  function blocParMois() {
+    return blocStats('mois', 'Naissances par mois', ['annee', 'tout'], 'annee', function (liste, per, corps) {
+      if (stVide(corps, liste)) return;
+      var groupes = MOIS.map(function (_, m) { return liste.filter(function (b) { return +b.date.slice(5, 7) === m + 1; }); });
+      histogramme(corps, groupes, window.innerWidth < 600 ? MOIS_I : MOIS_C, function (i) {
+        return per.portee === 'tout' ? 'Tous les mois de ' + MOIS[i] : maj(MOIS[i]) + ' ' + per.a;
+      }, per.portee === 'tout' ? null : function (i) {
+        return { du: iso(new Date(per.a, i, 1)), au: iso(new Date(per.a, i + 1, 0)) };
+      });
+    });
+  }
+  function blocJourSemaine() {
+    return blocStats('semaine', 'Jour de la semaine', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+      if (stVide(corps, liste)) return;
+      var groupes = JOURS.map(function (_, k) { return liste.filter(function (b) { return (lire(b.date).getDay() + 6) % 7 === k; }); });
+      histogramme(corps, groupes, JOURS_C, function (i) { return 'Le ' + JOURS[i]; }, null);
+    });
+  }
+
   function rendreStats() {
     var zone = $('stats');
     vider(zone);
     if (!donnees.bebes.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les stats apparaîtront dès le premier bébé ajouté.' })); return; }
-    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles()]));
+    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine()]));
   }
 
   function rendreRappel() {
