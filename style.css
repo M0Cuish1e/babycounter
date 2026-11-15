@@ -243,6 +243,20 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .st-legende { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--gris); }
 .st-legende span { display: inline-flex; align-items: center; gap: 6px; }
 .st-legende i { width: 10px; height: 10px; border-radius: 3px; }
+.st-horloge-cadre { display: flex; justify-content: center; }
+.st-horloge { width: min(100%, 320px); height: auto; overflow: visible; stroke: none; } /* annule le contour des icônes (règle svg générale) */
+.st-rayon { cursor: pointer; outline: none; }
+.st-rayon:hover .st-trace, .st-rayon.st-choisi .st-trace, .st-rayon:focus-visible .st-trace { fill: var(--encre); }
+.st-h-nombre { font-family: inherit; font-size: 22px; font-weight: 700; fill: var(--encre); }
+.st-h-lib { font-family: inherit; font-size: 10.5px; fill: var(--gris); }
+.st-h-repere { font-family: inherit; font-size: 11px; font-weight: 700; fill: var(--gris); }
+.st-barres { display: flex; flex-direction: column; gap: 2px; }
+.st-barre { display: grid; grid-template-columns: 108px minmax(0, 1fr) 76px; align-items: center; gap: 10px; min-height: 40px; padding: 4px 8px; border: 0; border-radius: 10px; background: transparent; text-align: left; font-size: 14px; }
+.st-barre:hover, .st-barre.st-choisi { background: var(--case); }
+.st-piste { height: 14px; display: flex; }
+.st-piste i { min-width: 2px; border-radius: 0 4px 4px 0; }
+.st-barre b { text-align: right; font-variant-numeric: tabular-nums; }
+.st-barre small { font-weight: 500; color: var(--gris); }
 
 /* ---------- Fenêtres ---------- */
 .dlg { border: 0; padding: 0; margin: 0; width: 100%; max-width: none; height: 100%; max-height: none; background: var(--fond); color: var(--encre); overflow-y: auto; }

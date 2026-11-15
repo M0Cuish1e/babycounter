@@ -588,11 +588,97 @@
     });
   }
 
+  /* ---------- Stats : horloge des heures de naissance ---------- */
+  function svgEl(tag, attrs, enfants) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    (enfants || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function blocHorloge() {
+    return blocStats('horloge', 'Heure de naissance', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+      var avec = liste.filter(function (b) { return b.heure; });
+      if (stVide(corps, avec, liste.length ? 'Aucune heure de naissance renseignée sur cette période.' : null)) return;
+      var par = []; for (var h = 0; h < 24; h++) par.push([]);
+      avec.forEach(function (b) { par[+b.heure.slice(0, 2)].push(b); });
+      var max = Math.max.apply(null, par.map(function (x) { return x.length; })) || 1;
+      var C = 160, R0 = 52, L = 86;
+      function pt(r, ang) { var a = (ang - 90) * Math.PI / 180; return (C + r * Math.cos(a)).toFixed(2) + ',' + (C + r * Math.sin(a)).toFixed(2); }
+      function secteur(r1, r2, a1, a2) {
+        return 'M' + pt(r1, a1) + 'L' + pt(r2, a1) + 'A' + r2 + ',' + r2 + ' 0 0 1 ' + pt(r2, a2) + 'L' + pt(r1, a2) + 'A' + r1 + ',' + r1 + ' 0 0 0 ' + pt(r1, a1) + 'Z';
+      }
+      var racine = svgEl('svg', { viewBox: '0 0 320 320', class: 'st-horloge', role: 'img', 'aria-label': 'Naissances selon l’heure de la journée' });
+      [0.5, 1].forEach(function (f) { racine.appendChild(svgEl('circle', { cx: C, cy: C, r: R0 + L * f, fill: 'none', stroke: 'var(--trait-doux)', 'stroke-width': 1 })); });
+      racine.appendChild(svgEl('circle', { cx: C, cy: C, r: R0 - 4, fill: 'var(--case)' }));
+      var centre = svgEl('text', { x: C, y: C + 2, 'text-anchor': 'middle', class: 'st-h-nombre' }), centre2 = svgEl('text', { x: C, y: C + 18, 'text-anchor': 'middle', class: 'st-h-lib' });
+      var detail;
+      par.forEach(function (x, h) {
+        var a1 = h * 15 + 1.2, a2 = (h + 1) * 15 - 1.2, r2 = R0 + Math.max(2, x.length / max * L);
+        var g = svgEl('g', { class: 'st-rayon', tabindex: 0, role: 'button', 'aria-label': 'De ' + h + ' h à ' + (h + 1) + ' h : ' + pluriel(x.length, 'naissance') }, [
+          svgEl('path', { d: secteur(R0, R0 + L, a1 - 1.2, a2 + 1.2), fill: 'transparent' }),
+          svgEl('path', { class: 'st-trace', d: secteur(R0, r2, a1, a2), fill: 'var(--heure)' })
+        ]);
+        function voir() { choisir(racine, g); montrer(h); }
+        g.addEventListener('click', voir);
+        g.addEventListener('mouseenter', voir);
+        g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); voir(); } });
+        racine.appendChild(g);
+      });
+      [[0, '0 h'], [6, '6 h'], [12, '12 h'], [18, '18 h']].forEach(function (t) {
+        var p = pt(R0 + L + 16, t[0] * 15).split(',');
+        racine.appendChild(svgEl('text', { x: p[0], y: +p[1] + 4, 'text-anchor': 'middle', class: 'st-h-repere' }, [document.createTextNode(t[1])]));
+      });
+      racine.appendChild(centre); racine.appendChild(centre2);
+      corps.appendChild(el('div', { class: 'st-horloge-cadre' }, [racine]));
+      detail = bandeDetail(corps);
+      function montrer(h) {
+        var x = par[h];
+        centre.textContent = x.length; centre2.textContent = h + ' h – ' + (h + 1) + ' h';
+        remplirDetail(detail, 'De ' + h + ' h à ' + (h + 1) + ' h', pluriel(x.length, 'naissance') + (x.length ? ' · ' + texteFG(x) : ''), null);
+      }
+      /* Au repos : part des naissances de nuit et heure la plus chargée. */
+      var nuit = avec.filter(function (b) { var hh = +b.heure.slice(0, 2); return hh >= 22 || hh < 6; }).length;
+      var hMax = par.reduce(function (im, x, i) { return x.length > par[im].length ? i : im; }, 0);
+      centre.textContent = avec.length; centre2.textContent = 'avec heure';
+      remplirDetail(detail, 'Nuit (22 h – 6 h)', pluriel(nuit, 'naissance') + ' · ' + pct(nuit, avec.length) + ' · heure la plus chargée : ' + hMax + ' h', null);
+    });
+  }
+
+  /* ---------- Stats : mode d'accouchement ---------- */
+  function blocModes() {
+    return blocStats('modes', 'Mode d’accouchement', ['mois', 'annee', 'tout'], 'annee', function (liste, per, corps) {
+      if (stVide(corps, liste)) return;
+      var t = liste.length, conteneur = el('div', { class: 'st-barres' }), detail;
+      var lignes = MODES_STATS.map(function (md) { return { md: md, l: liste.filter(function (b) { return b.mode === md[0]; }) }; })
+        .filter(function (x) { return x.md[0] || x.l.length; });
+      var max = Math.max.apply(null, lignes.map(function (x) { return x.l.length; })) || 1;
+      lignes.forEach(function (x) {
+        var b = el('button', { type: 'button', class: 'st-barre', 'aria-label': x.md[1] + ' : ' + x.l.length + ', ' + pct(x.l.length, t) }, [
+          el('span', { text: x.md[1] }),
+          el('span', { class: 'st-piste' }, [el('i', { style: 'width:' + (x.l.length / max * 100) + '%;background:' + x.md[2] })]),
+          el('b', {}, [document.createTextNode(String(x.l.length)), el('small', { text: ' · ' + pct(x.l.length, t) })])
+        ]);
+        function voir() { choisir(conteneur, b); montrer(x); }
+        b.addEventListener('click', voir);
+        b.addEventListener('mouseenter', voir);
+        conteneur.appendChild(b);
+      });
+      corps.appendChild(conteneur);
+      detail = bandeDetail(corps);
+      function montrer(x) {
+        var pm = moyenne(x.l, 'poids'), bo = bornesPeriode(per);
+        remplirDetail(detail, x.md[1], x.l.length ? texteFG(x.l) + (pm ? ' · poids moyen ' + textePoids(pm) : '') : 'aucune naissance',
+          x.l.length ? { du: bo.du, au: bo.au, mode: x.md[0] || 'aucun' } : null);
+      }
+      montrer(lignes[0]);
+    });
+  }
+
   function rendreStats() {
     var zone = $('stats');
     vider(zone);
     if (!donnees.bebes.length) { zone.appendChild(el('p', { class: 'vide', text: 'Les stats apparaîtront dès le premier bébé ajouté.' })); return; }
-    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine()]));
+    zone.appendChild(el('div', { class: 'st-grille' }, [blocChiffresCles(), blocParMois(), blocJourSemaine(), blocHorloge(), blocModes()]));
   }
 
   function rendreRappel() {
