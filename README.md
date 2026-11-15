@@ -1,6 +1,6 @@
 # Babycounter
 
-Carnet personnel des naissances pour une étudiante sage-femme : un bracelet par bébé, un calendrier (semaine, mois, année), une liste complète avec recherche et quelques stats.
+Carnet personnel des naissances pour une étudiante sage-femme : un bracelet par bébé, un calendrier (semaine, mois, année), une liste complète avec recherche, des stats en graphiques et des records.
 
 **Utiliser l'appli : https://m0cuish1e.github.io/babycounter/**
 

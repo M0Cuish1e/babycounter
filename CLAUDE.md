@@ -12,8 +12,11 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 - **Accueil** : sélecteur Semaine / Mois / Année, calendrier, puis liste des bracelets de la période affichée. Toucher un jour filtre la liste sur ce jour.
 - **Vue Semaine** : noms des jours en haut comme en vue Mois ; chaque jour est une colonne de 0 h à 24 h où les bébés sont placés à leur heure (`placerFrises()`), les bébés sans heure dans une bande « ? » en bas.
 - **Ordinateur** : trois colonnes (menu, calendrier, liste de 340 px). Une liste sous le calendrier a été maquettée puis écartée. Un prénom trop long ne doit jamais élargir la colonne : sa police est réduite (`ajusterPrenoms()` dans `app.js`).
-- **Navigation** : Accueil, bouton +, Stats. En bas sur téléphone, menu latéral sur ordinateur (à partir de 900 px). La vue Naissances est une entrée du menu latéral sur ordinateur et une loupe dans l'en-tête sur téléphone, pour ne pas charger la barre du bas. Les anciens onglets Records, Prénoms et Carte ont été écartés ou fusionnés dans Stats.
+- **Navigation** : sur téléphone, barre du bas Accueil, Naissances, +, Stats, Records (le + au milieu) et Réglages dans l'en-tête ; sur ordinateur (à partir de 900 px), menu latéral Accueil, Naissances, Stats, Records, Réglages. Les anciens onglets Prénoms et Carte ont été fusionnés dans Stats.
 - **Naissances** : liste complète triée par date, du plus récent au plus ancien (pas d'autre tri). Recherche sur le prénom et la note, sans tenir compte des accents ni des majuscules. Filtres : période du/au, sexe, mode (dont « non renseigné »), poids min. et max. Les filtres ne sont pas mémorisés d'une ouverture à l'autre de l'appli.
+- **Stats** : chaque bloc a son propre sélecteur de période (`blocStats()` dans `app.js`), gardé tant que l'appli est ouverte. Blocs et périodes possibles : chiffres clés (mois, année, tout), naissances par mois (année, ou tout en cumulant chaque mois de toutes les années), jour de la semaine (mois, année, tout), heure de naissance en horloge 24 h (mois, année, tout), mode d'accouchement (mois, année, tout), carte de l'année (Tous / Filles / Garçons), nuage des prénoms (mois, année, tout, filtrable par sexe). Graphiques en HTML/SVG écrits à la main, sans bibliothèque. Toucher un élément affiche le détail ; un lien « Voir ces naissances » ouvre l'onglet Naissances filtré, sauf pour le jour de la semaine, l'heure et le cumul « Tout » par mois, que les filtres de Naissances ne savent pas exprimer (choix assumé).
+- **Records** : onglet à part (mois, année, tout, filtrable par sexe) : journée la plus chargée, plus lourd, plus léger, plus grand, plus petit, prénom le plus donné, égalités signalées. Toucher un bébé ouvre sa fiche.
+- **Couleurs des modes** : `--mode-vb` (indigo), `--mode-instr` (ocre), `--mode-ces` (vert), « non renseigné » en gris ; le rose et le bleu restent réservés aux filles et aux garçons.
 - **Champs d'une fiche** : prénom, sexe, date, heure, poids (grammes), taille (cm), mode d'accouchement (`voie-basse`, `instrumentale`, `cesarienne`), note. Seuls le sexe et la date sont obligatoires. Le champ « rôle » a été explicitement retiré.
 
 ## Conventions
@@ -28,12 +31,12 @@ Outil personnel pour une étudiante sage-femme : noter les bébés qu'elle a acc
 
 ## État
 
-Fait : stockage, accueil, vue Naissances avec recherche, ajout, modification, suppression, export et import JSON (l'import fusionne par identifiant), mise en page téléphone et ordinateur, manifeste, service worker, rappel de sauvegarde après un mois.
+Fait : stockage, accueil, vue Naissances avec recherche, Stats, Records, ajout, modification, suppression, export et import JSON (l'import fusionne par identifiant), mise en page téléphone et ordinateur, manifeste, service worker, rappel de sauvegarde après un mois.
 
 À faire :
 
-- Activer GitHub Pages, puis vérifier l'installation sur un vrai téléphone, en particulier Safari sur iPhone, jamais testé.
-- Onglet Stats : il ne contient qu'un premier jet (filles, garçons, poids et taille moyens, répartition par mode). Son contenu reste à définir avec Guillaume, ainsi que l'éventuel découpage en plusieurs onglets.
+- Vérifier l'installation et l'usage hors ligne sur un vrai téléphone, en particulier Safari sur iPhone, jamais testé (GitHub Pages est actif).
+- Sauvegarde : à rediscuter avec Guillaume (rappel, fréquence, autres moyens que l'export manuel).
 - Champs supplémentaires en attente de la réponse de l'utilisatrice : terme, présentation, péridurale, périnée, jumeaux.
 
 ## Lancer en local
