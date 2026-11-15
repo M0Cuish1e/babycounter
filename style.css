@@ -144,7 +144,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 /* Ruban de papier à liseré : bande blanche, liseré rose ou bleu en haut et en bas,
    fente à gauche, trois trous à droite. Les couleurs passent par --lisere, --perce et --contour. */
 .bracelet { --lisere: var(--voile); --perce: var(--trait); --contour: var(--trait-doux); --ep: 6px; --cote: 3px;
-  width: 100%; min-height: 54px; flex-shrink: 0; border: 0; border-radius: 6px; display: flex; align-items: center; gap: 12px; padding: var(--ep) 14px; text-align: left;
+  width: 100%; min-height: 54px; flex-shrink: 0; border: 0; border-radius: 12px; display: flex; align-items: center; gap: 12px; padding: var(--ep) 14px; text-align: left;
   background: var(--blanc); color: var(--encre);
   box-shadow: inset 0 var(--ep) 0 var(--lisere), inset 0 calc(-1 * var(--ep)) 0 var(--lisere), inset 0 0 0 var(--cote) var(--lisere), 0 0 0 1.5px var(--contour); }
 .bracelet.F { --lisere: var(--rose); --perce: var(--rose-bord); }
@@ -162,7 +162,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .bracelet-mesures { text-align: right; font-size: 13.5px; font-weight: 500; line-height: 1.3; white-space: nowrap; color: var(--encre); }
 .bracelet-mesures:empty { display: none; }
 .bracelet-mesures span { display: block; font-weight: 400; }
-.bracelet.apercu { --ep: 9px; --cote: 4px; min-height: 86px; border-radius: 9px; gap: 16px; padding: var(--ep) 20px; }
+.bracelet.apercu { --ep: 9px; --cote: 4px; min-height: 86px; border-radius: 18px; gap: 16px; padding: var(--ep) 20px; }
 .bracelet.apercu .fente { width: 12px; height: 34px; border-radius: 6px; box-shadow: inset 0 0 0 2px var(--perce); }
 .bracelet.apercu .trous { gap: 6px; }
 .bracelet.apercu .trous i { width: 8px; height: 8px; }
