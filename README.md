@@ -9,7 +9,7 @@ Pour l'installer sur l'écran d'accueil d'un iPhone : ouvrir ce lien dans Safari
 - **Rien à installer** : c'est une page web, installable comme une appli (PWA) et utilisable hors ligne.
 - **Données sur l'appareil uniquement** : tout est stocké dans le navigateur (`localStorage`). Aucun serveur, aucun envoi réseau.
 - **Sauvegarde** : export et import d'un fichier JSON depuis « Réglages et sauvegarde ».
-- **Données d'essai** : des fichiers fictifs à importer pour tester sont dans [`exemples/`](exemples/) ([petit](https://m0cuish1e.github.io/babycounter/exemples/essai-petit.json), [deux ans](https://m0cuish1e.github.io/babycounter/exemples/essai-deux-ans.json), [cas limites](https://m0cuish1e.github.io/babycounter/exemples/essai-limites.json)). « Tout effacer » les retire.
+- **Données d'essai** : des fichiers fictifs à importer pour tester sont dans [`exemples/`](exemples/) ([étudiante, le plus réaliste](https://m0cuish1e.github.io/babycounter/exemples/essai-etudiante.json), [petit](https://m0cuish1e.github.io/babycounter/exemples/essai-petit.json), [deux ans](https://m0cuish1e.github.io/babycounter/exemples/essai-deux-ans.json), [cas limites](https://m0cuish1e.github.io/babycounter/exemples/essai-limites.json)). « Tout effacer » les retire.
 
 ## Fichiers
 
