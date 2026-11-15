@@ -141,22 +141,31 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .vide { margin: 16px 0 0; color: var(--gris); text-align: center; }
 .vide .btn-principal { margin: 14px auto 0; }
 
-.bracelet { width: 100%; min-height: 54px; flex-shrink: 0; border: 0; border-radius: 27px; display: flex; align-items: center; gap: 10px; padding: 0 16px 0 7px; text-align: left; }
-.bracelet.F { background: var(--rose); color: var(--rose-encre); box-shadow: inset 0 0 0 1.5px var(--rose-bord); }
-.bracelet.M { background: var(--bleu); color: var(--bleu-encre); box-shadow: inset 0 0 0 1.5px var(--bleu-bord); }
-.bracelet.neutre { background: var(--voile); color: var(--gris); box-shadow: inset 0 0 0 1.5px var(--trait); }
-.fermoir { width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0; background: var(--trait); }
-.bracelet.F .fermoir { background: var(--rose-bord); } .bracelet.M .fermoir { background: var(--bleu-bord); }
-.fermoir i { width: 6px; height: 6px; border-radius: 3px; background: var(--fond); }
+/* Ruban de papier à liseré : bande blanche, liseré rose ou bleu en haut et en bas,
+   fente à gauche, trois trous à droite. Les couleurs passent par --lisere, --perce et --contour. */
+.bracelet { --lisere: var(--voile); --perce: var(--trait); --contour: var(--trait-doux); --ep: 6px;
+  width: 100%; min-height: 54px; flex-shrink: 0; border: 0; border-radius: 6px; display: flex; align-items: center; gap: 12px; padding: var(--ep) 14px; text-align: left;
+  background: var(--blanc); color: var(--encre);
+  box-shadow: inset 0 var(--ep) 0 var(--lisere), inset 0 calc(-1 * var(--ep)) 0 var(--lisere), 0 0 0 1.5px var(--contour); }
+.bracelet.F { --lisere: var(--rose); --perce: var(--rose-bord); }
+.bracelet.M { --lisere: var(--bleu); --perce: var(--bleu-bord); }
+.bracelet.F .bracelet-prenom { color: var(--rose-encre); }
+.bracelet.M .bracelet-prenom { color: var(--bleu-encre); }
+.bracelet.neutre .bracelet-prenom { color: var(--gris); }
+.fente { width: 8px; height: 22px; border-radius: 4px; flex-shrink: 0; box-shadow: inset 0 0 0 1.5px var(--perce); }
+.trous { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.trous i { width: 5px; height: 5px; border-radius: 50%; background: var(--perce); }
 .bracelet-texte { flex: 1; min-width: 0; display: block; }
 .bracelet-prenom, .bracelet-quand { display: block; }
 .bracelet-prenom { font-family: var(--main); font-weight: 700; font-size: 26px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bracelet-quand { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1em; }
-.bracelet-mesures { text-align: right; font-size: 13.5px; font-weight: 500; line-height: 1.3; white-space: nowrap; }
+.bracelet-quand { font-size: 12px; line-height: 1.3; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1em; }
+.bracelet-mesures { text-align: right; font-size: 13.5px; font-weight: 500; line-height: 1.3; white-space: nowrap; color: var(--encre); }
+.bracelet-mesures:empty { display: none; }
 .bracelet-mesures span { display: block; font-weight: 400; }
-.bracelet.apercu { min-height: 86px; border-radius: 43px; gap: 14px; padding: 0 20px 0 10px; }
-.bracelet.apercu .fermoir { width: 66px; height: 66px; border-radius: 33px; gap: 9px; }
-.bracelet.apercu .fermoir i { width: 10px; height: 10px; border-radius: 5px; }
+.bracelet.apercu { --ep: 9px; min-height: 86px; border-radius: 9px; gap: 16px; padding: var(--ep) 20px; }
+.bracelet.apercu .fente { width: 12px; height: 34px; border-radius: 6px; box-shadow: inset 0 0 0 2px var(--perce); }
+.bracelet.apercu .trous { gap: 6px; }
+.bracelet.apercu .trous i { width: 8px; height: 8px; }
 .bracelet.apercu .bracelet-prenom { font-size: 40px; }
 .bracelet.apercu .bracelet-quand { font-size: 13px; margin-top: 2px; }
 
@@ -347,8 +356,8 @@ legend, .champ label { display: block; padding: 0; font-size: 13px; color: var(-
   .liste { flex: 1; min-height: 0; overflow-y: auto; }
   .liste-tete { min-height: 48px; align-items: center; margin-top: 0; }
   .liste-tete h2 { font-size: 16px; }
-  .bracelet { min-height: 58px; border-radius: 29px; }
-  .bracelet:not(.apercu):hover { filter: brightness(0.97); }
+  .bracelet:not(.apercu) { min-height: 58px; transition: box-shadow .12s; }
+  .bracelet:not(.apercu):hover { --contour: var(--trait); box-shadow: inset 0 var(--ep) 0 var(--lisere), inset 0 calc(-1 * var(--ep)) 0 var(--lisere), 0 0 0 1.5px var(--contour), 0 3px 10px rgba(35, 37, 74, 0.10); }
 
   .jours-noms { gap: 6px; margin-bottom: 6px; font-size: 13px; text-align: left; padding-left: 10px; }
   .grille { gap: 6px; }

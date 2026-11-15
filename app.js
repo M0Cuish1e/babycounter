@@ -269,6 +269,8 @@
   }
 
   /* ---------- Rendu : liste ---------- */
+  /* Les trois trous à droite du bracelet, purement décoratifs. */
+  function trous() { return el('span', { class: 'trous', 'aria-hidden': 'true' }, [el('i'), el('i'), el('i')]); }
   function bracelet(b) {
     var mesures = el('span', { class: 'bracelet-mesures' });
     if (b.poids) mesures.appendChild(document.createTextNode(textePoids(b.poids)));
@@ -277,12 +279,13 @@
       'aria-label': 'Modifier ' + (b.prenom || 'ce bébé') + ', ' + texteQuand(b),
       onclick: function () { ouvrirFiche(b); }
     }, [
-      el('span', { class: 'fermoir', 'aria-hidden': 'true' }, [el('i'), el('i')]),
+      el('span', { class: 'fente', 'aria-hidden': 'true' }),
       el('span', { class: 'bracelet-texte' }, [
         el('span', { class: 'bracelet-prenom', text: b.prenom || 'Bébé' }),
         el('span', { class: 'bracelet-quand', text: texteQuand(b) })
       ]),
-      mesures
+      mesures,
+      trous()
     ]);
   }
   function rendreListe() {
@@ -823,9 +826,10 @@
   /* Bracelet d'information (journée, prénom) : même forme que les bracelets de bébé. */
   function braceletInfo(classe, titre, sous, mesure, label, action) {
     return el('button', { type: 'button', class: 'bracelet ' + classe, 'aria-label': label, onclick: action }, [
-      el('span', { class: 'fermoir', 'aria-hidden': 'true' }, [el('i'), el('i')]),
+      el('span', { class: 'fente', 'aria-hidden': 'true' }),
       el('span', { class: 'bracelet-texte' }, [el('span', { class: 'bracelet-prenom', text: titre }), el('span', { class: 'bracelet-quand', text: sous })]),
-      el('span', { class: 'bracelet-mesures st-record-val', text: mesure })
+      el('span', { class: 'bracelet-mesures st-record-val', text: mesure }),
+      trous()
     ]);
   }
   function exaequo(n, mot) { return n ? 'Ex æquo avec ' + n + ' autre' + (n > 1 ? 's ' : ' ') + mot + (n > 1 ? 's' : '') : null; }
