@@ -268,6 +268,11 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0
 .st-case.st-choisi, .st-case:hover { outline: 2px solid var(--encre); outline-offset: 1px; }
 .st-echelle { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--gris); }
 .st-echelle i { width: 12px; height: 12px; border-radius: 3px; }
+.st-anniv { display: flex; flex-direction: column; gap: 6px; }
+.st-anniv-liste { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-anniv-liste button { min-height: 36px; padding: 0 6px 0 12px; border: 1.5px solid var(--trait); border-radius: 18px; background: var(--blanc); font-size: 13.5px; display: inline-flex; align-items: center; gap: 8px; }
+.st-anniv-liste b { min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: var(--voile); font-size: 12.5px; line-height: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+.st-anniv-liste button:hover { border-color: var(--encre); }
 .st-nuage { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 12px; padding: 6px 0; }
 .st-nuage button { border: 0; background: transparent; padding: 2px 5px; border-radius: 8px; font-family: var(--main); font-weight: 700; line-height: 1.05; }
 .st-nuage .F { color: var(--rose-encre); } .st-nuage .M { color: var(--bleu-encre); }

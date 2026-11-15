@@ -722,26 +722,32 @@
     M: ['var(--case)', '#C3DDF5', '#8DBDEB', '#4E8FD1', '#1F5A99']
   };
   function blocCarteAnnee() {
-    return blocStats('carte', 'Carte de l’année', ['annee'], 'annee', function (liste, per, corps) {
+    /* Année : une case par date. Tout : toutes les années cumulées jour par jour (29 février compris),
+       pour voir les dates d'anniversaire qui reviennent le plus. */
+    return blocStats('carte', 'Carte de l’année', ['annee', 'tout'], 'annee', function (liste, per, corps) {
       liste = selonSexe(liste, per);
-      var rampe = RAMPES[per.sexe], index = {}, detail;
-      liste.forEach(function (b) { (index[b.date] = index[b.date] || []).push(b); });
+      var cumul = per.portee === 'tout', an = cumul ? 2024 : per.a; /* 2024 est bissextile : la grille a un 29 février */
+      function cleDe(date) { return cumul ? date.slice(5) : date; }
+      function nomDe(cle) { if (!cumul) return dateLongue(cle); var p = cle.split('-'); return quantieme(+p[1]) + ' ' + MOIS[+p[0] - 1]; }
+      var rampe = RAMPES[per.sexe], index = {}, detail, cases = {};
+      liste.forEach(function (b) { var k = cleDe(b.date); (index[k] = index[k] || []).push(b); });
       var grille = el('div', { class: 'st-calan' });
       grille.appendChild(el('span'));
       for (var j = 1; j <= 31; j++) grille.appendChild(el('span', { class: 'st-calan-j', 'aria-hidden': 'true', text: j === 1 || j % 5 === 0 ? j : '' }));
       MOIS_C.forEach(function (nom, m) {
         grille.appendChild(el('span', { class: 'st-calan-m', text: nom }));
-        var nb = new Date(per.a, m + 1, 0).getDate();
+        var nb = new Date(an, m + 1, 0).getDate();
         for (var j = 1; j <= 31; j++) {
           if (j > nb) { grille.appendChild(el('span')); continue; }
           (function (cle) {
             var n = (index[cle] || []).length;
-            var c = el('button', { type: 'button', class: 'st-case', style: 'background:' + rampe[Math.min(n, 4)], 'aria-label': dateLongue(cle) + ' : ' + pluriel(n, 'naissance') });
+            var c = el('button', { type: 'button', class: 'st-case', style: 'background:' + rampe[Math.min(n, 4)], 'aria-label': nomDe(cle) + ' : ' + pluriel(n, 'naissance') });
             function voir() { choisir(grille, c); montrer(cle); }
             c.addEventListener('click', voir);
             c.addEventListener('mouseenter', voir);
+            cases[cle] = c;
             grille.appendChild(c);
-          })(iso(new Date(per.a, m, j)));
+          })(cleDe(iso(new Date(an, m, j))));
         }
       });
       corps.appendChild(grille);
@@ -749,15 +755,35 @@
       rampe.forEach(function (c) { echelle.appendChild(el('i', { style: 'background:' + c })); });
       echelle.appendChild(document.createTextNode('4 et plus'));
       corps.appendChild(echelle);
-      detail = bandeDetail(corps);
       var qui = { tous: 'naissance', F: 'fille', M: 'garçon' }[per.sexe];
+      /* Anniversaires les plus fréquents (mode Tout) : dates partagées par au moins deux bébés. */
+      if (cumul) {
+        var partages = Object.keys(index).filter(function (k) { return index[k].length > 1; })
+          .sort(function (a, b) { return index[b].length - index[a].length || (a < b ? -1 : 1); });
+        var zone = el('div', { class: 'st-anniv' }, [el('p', { class: 'st-lib', text: 'Anniversaires les plus fréquents' })]);
+        if (!partages.length) zone.appendChild(el('p', { class: 'st-lib', text: 'Aucune date partagée par deux bébés pour l’instant.' }));
+        else zone.appendChild(el('div', { class: 'st-anniv-liste' }, partages.slice(0, 8).map(function (k) {
+          return el('button', { type: 'button', 'aria-label': nomDe(k) + ' : ' + pluriel(index[k].length, 'bébé'), onclick: function () { choisir(grille, cases[k]); montrer(k); } }, [
+            el('span', { text: nomDe(k) }), el('b', { text: index[k].length })
+          ]);
+        })));
+        corps.appendChild(zone);
+      }
+      detail = bandeDetail(corps);
       function montrer(cle) {
         var l = index[cle] || [];
-        remplirDetail(detail, dateLongue(cle), per.sexe === 'tous' ? pluriel(l.length, 'naissance') + (l.length ? ' · ' + texteFG(l) : '') : pluriel(l.length, qui),
-          l.length ? { du: cle, au: cle, sexe: per.sexe === 'tous' ? '' : per.sexe } : null);
+        var texte = per.sexe === 'tous' ? pluriel(l.length, 'naissance') + (l.length ? ' · ' + texteFG(l) : '') : pluriel(l.length, qui);
+        if (cumul && l.length) {
+          var ans = {};
+          l.forEach(function (b) { var a = b.date.slice(0, 4); ans[a] = (ans[a] || 0) + 1; });
+          texte += ' · ' + Object.keys(ans).sort().map(function (a) { return ans[a] > 1 ? a + ' (' + ans[a] + ')' : a; }).join(', ');
+        }
+        /* En mode Tout, une date couvre plusieurs années : pas de lien, les filtres de Naissances ne savent pas l'exprimer. */
+        remplirDetail(detail, nomDe(cle), texte, l.length && !cumul ? { du: cle, au: cle, sexe: per.sexe === 'tous' ? '' : per.sexe } : null);
       }
       var jours = Object.keys(index).length;
-      remplirDetail(detail, String(per.a), pluriel(jours, 'jour') + ' avec au moins une ' + qui + ' · ' + pluriel(liste.length, per.sexe === 'tous' ? 'bébé' : qui), null);
+      remplirDetail(detail, cumul ? 'Toutes les années' : String(per.a),
+        pluriel(jours, 'jour') + (cumul ? ' du calendrier' : '') + ' avec au moins une ' + qui + ' · ' + pluriel(liste.length, per.sexe === 'tous' ? 'bébé' : qui), null);
     }, { large: true, sexe: 'Couleur de la carte' });
   }
 
