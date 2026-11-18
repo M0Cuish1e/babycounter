@@ -13,14 +13,14 @@
 
    Pour publier une mise à jour : changer VERSION (par exemple la date du jour).
    Si un fichier est ajouté à l'appli, l'ajouter aussi à FICHIERS. */
-var VERSION = '2026-11-15.3';
+var VERSION = '2026-11-18.1';
 var PREFIXE = 'babycounter-';
 var CACHE = PREFIXE + VERSION;
 var FICHIERS = [
   './', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'fonts/dm-sans-latin-wght-normal.woff2', 'fonts/dm-sans-latin-ext-wght-normal.woff2',
   'fonts/caveat-latin-700-normal.woff2', 'fonts/caveat-latin-ext-700-normal.woff2',
-  'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'
+  'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'
 ];
 
 /* Type attendu pour chaque fichier : une page HTML servie à la place d'une police
